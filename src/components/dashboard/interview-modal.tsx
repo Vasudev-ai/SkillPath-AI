@@ -5,12 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { InterviewMessage } from '@/lib/types';
 import { interviewAction } from '@/app/actions';
-import { Bot, Loader2, Send, User } from 'lucide-react';
+import { Bot, Loader2, Send, User, VideoOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 interface InterviewModalProps {
   courseTitle: string | null;
@@ -20,20 +21,24 @@ interface InterviewModalProps {
 
 const content = {
     en: {
-        title: "Practice Interview",
+        title: "Practice Video Interview",
         description: "Your AI coach will ask you a few questions related to",
         placeholder: "Type your answer here...",
         send: "Send",
         end: "End Interview",
-        error_title: "Interview Error"
+        error_title: "Interview Error",
+        camera_error_title: "Camera Access Required",
+        camera_error_description: "Please enable camera permissions in your browser settings to use this feature.",
     },
     hi: {
-        title: "साक्षात्कार का अभ्यास करें",
+        title: "वीडियो साक्षात्कार का अभ्यास करें",
         description: "आपका AI कोच आपसे संबंधित कुछ प्रश्न पूछेगा",
         placeholder: "अपना उत्तर यहां लिखें...",
         send: "भेजें",
         end: "साक्षात्कार समाप्त करें",
-        error_title: "साक्षात्कार में त्रुटि"
+        error_title: "साक्षात्कार में त्रुटि",
+        camera_error_title: "कैमरा एक्सेस आवश्यक है",
+        camera_error_description: "इस सुविधा का उपयोग करने के लिए कृपया अपनी ब्राउज़र सेटिंग्स में कैमरा अनुमति सक्षम करें।",
     }
 }
 
@@ -41,27 +46,63 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const t = content[lang];
 
   useEffect(() => {
-    // When the modal opens with a new course title, start the interview
+    // When the modal opens, get camera permission
     if (courseTitle) {
-      setMessages([]);
-      setIsLoading(true);
-      interviewAction(courseTitle, [])
-        .then(res => {
-          if (res.response) {
-            setMessages([{ role: 'model', content: res.response }]);
-          } else if(res.error) {
-            toast({ variant: 'destructive', title: t.error_title, description: res.error });
-            onClose();
+      const getCameraPermission = async () => {
+        try {
+          // Reset state
+          setMessages([]);
+          setHasCameraPermission(null);
+          
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          setHasCameraPermission(true);
+
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
           }
-        })
-        .finally(() => setIsLoading(false));
+
+          // Start the interview only after getting camera permission
+          setIsLoading(true);
+          interviewAction(courseTitle, [])
+            .then(res => {
+              if (res.response) {
+                setMessages([{ role: 'model', content: res.response }]);
+              } else if(res.error) {
+                toast({ variant: 'destructive', title: t.error_title, description: res.error });
+                onClose();
+              }
+            })
+            .finally(() => setIsLoading(false));
+
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: t.camera_error_title,
+            description: t.camera_error_description,
+          });
+        }
+      };
+
+      getCameraPermission();
+      
+      // Cleanup function to stop video stream when modal closes
+      return () => {
+        if(videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+        }
+      }
     }
-  }, [courseTitle, onClose, toast, t.error_title]);
+  }, [courseTitle, onClose, toast, t.error_title, t.camera_error_title, t.camera_error_description]);
   
   useEffect(() => {
     // Scroll to bottom when a new message is added
@@ -101,65 +142,90 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col glass-card p-0">
-        <DialogHeader className="p-6 pb-2">
+      <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col glass-card p-0">
+        <DialogHeader className="p-6 pb-2 border-b">
           <DialogTitle className="font-headline text-primary">{t.title}</DialogTitle>
           <DialogDescription>
             {t.description} '{courseTitle}'.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-1 px-6" ref={scrollAreaRef as any}>
-            <div className='space-y-4 pr-4'>
-                {messages.map((msg, index) => (
-                    <div key={index} className={cn("flex items-start gap-3", msg.role === 'user' && 'justify-end')}>
-                        {msg.role === 'model' && (
-                            <Avatar className="w-8 h-8 border">
-                                <AvatarFallback><Bot size={18} /></AvatarFallback>
-                            </Avatar>
-                        )}
-                        <div className={cn(
-                            "p-3 rounded-2xl max-w-sm whitespace-pre-wrap",
-                            msg.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground'
-                        )}>
-                            <p className="text-sm">{msg.content}</p>
-                        </div>
-                        {msg.role === 'user' && (
-                            <Avatar className="w-8 h-8 border">
-                                <AvatarFallback><User size={18} /></AvatarFallback>
-                            </Avatar>
-                        )}
-                    </div>
-                ))}
-                 {isLoading && messages.length > 0 && (
-                    <div className="flex items-start gap-3">
-                         <Avatar className="w-8 h-8 border">
-                            <AvatarFallback><Bot size={18} /></AvatarFallback>
-                        </Avatar>
-                        <div className="p-3 rounded-2xl bg-muted">
-                            <Loader2 className="animate-spin text-primary" />
-                        </div>
+        <div className="flex-1 grid md:grid-cols-2 overflow-hidden">
+            <div className='relative flex flex-col items-center justify-center bg-black/50 p-4'>
+                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                {hasCameraPermission === false && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 p-4">
+                        <VideoOff className="h-16 w-16 text-destructive mb-4"/>
+                         <Alert variant="destructive">
+                            <AlertTitle>{t.camera_error_title}</AlertTitle>
+                            <AlertDescription>
+                                {t.camera_error_description}
+                            </AlertDescription>
+                        </Alert>
                     </div>
                 )}
-                 {isLoading && messages.length === 0 && (
-                    <div className="flex items-center justify-center p-8">
-                        <Loader2 className="animate-spin text-primary" size={40}/>
+                 {hasCameraPermission === null && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80">
+                       <Loader2 className="h-16 w-16 animate-spin text-primary"/>
+                       <p className='mt-4 text-muted-foreground'>Accessing camera...</p>
                     </div>
                 )}
             </div>
-        </ScrollArea>
-        <div className="p-6 pt-2 border-t bg-background/50">
-            <form onSubmit={handleSubmit} className="flex gap-2">
-                <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={t.placeholder}
-                    disabled={isLoading}
-                    className="flex-1"
-                />
-                <Button type="submit" disabled={isLoading || !input.trim()}>
-                    <Send className="h-4 w-4" />
-                </Button>
-            </form>
+
+            <div className='flex flex-col h-full'>
+                <ScrollArea className="flex-1 px-6 pt-6" ref={scrollAreaRef as any}>
+                    <div className='space-y-4 pr-4'>
+                        {messages.map((msg, index) => (
+                            <div key={index} className={cn("flex items-start gap-3", msg.role === 'user' && 'justify-end')}>
+                                {msg.role === 'model' && (
+                                    <Avatar className="w-8 h-8 border">
+                                        <AvatarFallback><Bot size={18} /></AvatarFallback>
+                                    </Avatar>
+                                )}
+                                <div className={cn(
+                                    "p-3 rounded-2xl max-w-sm whitespace-pre-wrap",
+                                    msg.role === 'model' ? 'bg-muted' : 'bg-primary text-primary-foreground'
+                                )}>
+                                    <p className="text-sm">{msg.content}</p>
+                                </div>
+                                {msg.role === 'user' && (
+                                    <Avatar className="w-8 h-8 border">
+                                        <AvatarFallback><User size={18} /></AvatarFallback>
+                                    </Avatar>
+                                )}
+                            </div>
+                        ))}
+                        {isLoading && messages.length > 0 && (
+                            <div className="flex items-start gap-3">
+                                <Avatar className="w-8 h-8 border">
+                                    <AvatarFallback><Bot size={18} /></AvatarFallback>
+                                </Avatar>
+                                <div className="p-3 rounded-2xl bg-muted">
+                                    <Loader2 className="animate-spin text-primary" />
+                                </div>
+                            </div>
+                        )}
+                        {isLoading && hasCameraPermission && messages.length === 0 && (
+                            <div className="flex items-center justify-center p-8">
+                                <Loader2 className="animate-spin text-primary" size={40}/>
+                            </div>
+                        )}
+                    </div>
+                </ScrollArea>
+                <div className="p-6 pt-2 border-t bg-background/50">
+                    <form onSubmit={handleSubmit} className="flex gap-2">
+                        <Input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder={t.placeholder}
+                            disabled={isLoading || hasCameraPermission !== true}
+                            className="flex-1"
+                        />
+                        <Button type="submit" disabled={isLoading || !input.trim() || hasCameraPermission !== true}>
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </form>
+                </div>
+            </div>
         </div>
       </DialogContent>
     </Dialog>
