@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle, GraduationCap } from 'lucide-react';
+import { ArrowRight, CheckCircle } from 'lucide-react';
 import type { LearningPath } from '@/lib/types';
 import { nsqfCourses } from '@/lib/data';
 import { ExplainabilityLayer } from './explainability-layer';
@@ -38,6 +39,7 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
         title: step.course_id, 
         nsqf_level: step.nsqf_level, 
         provider: step.provider,
+        url: '#',
       },
       explanation: path.explainability[index] || "No explanation available.",
       action: path.next_actions[index] || { label: content[lang].action },
@@ -74,10 +76,12 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
                     </CardHeader>
                     <CardContent>
                       <ExplainabilityLayer explanation={step.explanation} lang={lang} />
-                      <Button className="mt-4 w-full sm:w-auto">
-                        {step.action.label}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
+                      <Link href={step.course.url} target="_blank" rel="noopener noreferrer">
+                        <Button className="mt-4 w-full sm:w-auto">
+                          {step.action.label}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 </div>

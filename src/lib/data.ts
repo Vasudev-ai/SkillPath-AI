@@ -5,6 +5,7 @@ export type NsqfCourse = {
   provider: string;
   duration_weeks: number;
   cost_inr: number;
+  url: string;
 };
 
 export const nsqfCourses: NsqfCourse[] = [
@@ -15,6 +16,7 @@ export const nsqfCourses: NsqfCourse[] = [
     provider: 'Skill India Digital',
     duration_weeks: 24,
     cost_inr: 50000,
+    url: 'https://www.skillindiadigital.gov.in/',
   },
   {
     course_id: 'NSQF002',
@@ -23,6 +25,7 @@ export const nsqfCourses: NsqfCourse[] = [
     provider: 'NCVET',
     duration_weeks: 16,
     cost_inr: 35000,
+    url: 'https://ncvet.gov.in/',
   },
   {
     course_id: 'NSQF003',
@@ -31,6 +34,7 @@ export const nsqfCourses: NsqfCourse[] = [
     provider: 'AWS Academy',
     duration_weeks: 12,
     cost_inr: 45000,
+    url: 'https://aws.amazon.com/training/awsacademy/',
   },
   {
     course_id: 'NSQF004',
@@ -39,6 +43,7 @@ export const nsqfCourses: NsqfCourse[] = [
     provider: 'Google Career Certificates',
     duration_weeks: 20,
     cost_inr: 25000,
+    url: 'https://grow.google/intl/en_in/certificates/',
   },
   {
     course_id: 'NSQF005',
@@ -47,6 +52,7 @@ export const nsqfCourses: NsqfCourse[] = [
     provider: 'IIT Madras',
     duration_weeks: 36,
     cost_inr: 120000,
+    url: 'https://www.iitm.ac.in/',
   },
   {
     course_id: 'NSQF006',
@@ -55,5 +61,6 @@ export const nsqfCourses: NsqfCourse[] = [
     provider: 'C-DAC',
     duration_weeks: 24,
     cost_inr: 60000,
+    url: 'https://www.cdac.in/',
   },
 ];
