@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Mic } from 'lucide-react';
 import type { LearningPath } from '@/lib/types';
 import { nsqfCourses } from '@/lib/data';
 import { ExplainabilityLayer } from './explainability-layer';
@@ -18,14 +18,16 @@ const content = {
         subtitle: "A step-by-step guide to achieving your career goals.",
         level: "NSQF Level",
         action: "Enroll Now",
-        goal: "Career Goal Achieved!"
+        goal: "Career Goal Achieved!",
+        practice: "Practice Interview"
     },
     hi: {
         title: "आपकी अनुशंसित राह",
         subtitle: "अपने करियर लक्ष्यों को प्राप्त करने के लिए एक कदम-दर-कदम मार्गदर्शिका।",
         level: "एनएसक्यूएफ स्तर",
         action: "अभी पंजीकरण करें",
-        goal: "करियर लक्ष्य प्राप्त हुआ!"
+        goal: "करियर लक्ष्य प्राप्त हुआ!",
+        practice: "साक्षात्कार का अभ्यास करें"
     }
 }
 
@@ -76,12 +78,18 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
                     </CardHeader>
                     <CardContent>
                       <ExplainabilityLayer explanation={step.explanation} lang={lang} />
-                      <Link href={step.course.url} target="_blank" rel="noopener noreferrer">
-                        <Button className="mt-4 w-full sm:w-auto">
-                          {step.action.label}
-                          <ArrowRight className="ml-2 h-4 w-4" />
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <Link href={step.course.url} target="_blank" rel="noopener noreferrer" className='flex-grow'>
+                          <Button className="w-full">
+                            {step.action.label}
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button variant="outline" className='flex-grow'>
+                            <Mic className="mr-2 h-4 w-4" />
+                            {content[lang].practice}
                         </Button>
-                      </Link>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
