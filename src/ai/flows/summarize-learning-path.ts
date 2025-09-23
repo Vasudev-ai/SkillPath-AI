@@ -36,14 +36,19 @@ export async function summarizeLearningPath(
   return summarizeLearningPathFlow(input);
 }
 
+const systemPrompt = `You are an AI expert in career guidance and education, especially in the Indian NSQF framework. Your task is to summarize a detailed, JSON-formatted learning path into a concise, encouraging, and easy-to-understand summary for a learner. You must provide this summary in both English and Hindi.
+
+Highlight the key steps, the most important skills to be acquired, and the potential career benefits. The tone should be motivational and clear.`;
+
 const summarizeLearningPathPrompt = ai.definePrompt({
   name: 'summarizeLearningPathPrompt',
+  system: systemPrompt,
   input: {schema: SummarizeLearningPathInputSchema},
   output: {schema: SummarizeLearningPathOutputSchema},
-  prompt: `You are an AI expert in career guidance and education, especially in the Indian NSQF framework. Please summarize the following learning path in both English and Hindi, highlighting the key steps, skills to be acquired, and potential career benefits. Focus on making it easily understandable for a learner. The summary should be concise and encouraging.
+  prompt: `Please summarize the following learning path in both English and Hindi.
 
 Learning Path (JSON):
-{{learningPathJson}}`,
+{{{learningPathJson}}}`,
 });
 
 const summarizeLearningPathFlow = ai.defineFlow(

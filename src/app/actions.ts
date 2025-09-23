@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generatePersonalizedLearningPath } from '@/ai/flows/generate-personalized-learning-path';
@@ -11,10 +10,6 @@ const userProfileSchema = z.object({
   education: z.string().min(1, 'Education is required'),
   skills: z.string().min(1, 'Skills are required'),
   aspirations: z.string().min(1, 'Aspirations are required'),
-  budget: z.string(),
-  time_commitment: z.string(),
-  device_access: z.array(z.string()),
-  constraints: z.string(),
 });
 
 export async function generatePathAction(
@@ -31,14 +26,9 @@ export async function generatePathAction(
   try {
     const profileString = JSON.stringify(validation.data);
     const laborMarketData = JSON.stringify({
-      demand_index: 0.85,
-      average_salary: '9,50,000 INR per annum',
+      demand_index: 85,
+      avg_salary_inr: 950000,
       top_locations: ['Bengaluru', 'Pune', 'Hyderabad', 'NCR'],
-      sample_jobs: [
-        'Frontend Developer',
-        'Full Stack Engineer',
-        'UI/UX Developer',
-      ],
     });
 
     const learningPath = await generatePersonalizedLearningPath({
@@ -49,13 +39,21 @@ export async function generatePathAction(
     if (!learningPath) {
       return { path: null, error: 'AI model failed to return a path.' };
     }
+    
+    // The AI might return a string for salary, so we parse it here if needed.
+    if (typeof learningPath.labour_market_signals.avg_salary_inr === 'string') {
+        const salaryStr = learningPath.labour_market_signals.avg_salary_inr as string;
+        learningPath.labour_market_signals.avg_salary_inr = parseInt(salaryStr.replace(/[^0-9]/g, '')) || 0;
+    }
+
 
     return { path: learningPath };
   } catch (error) {
     console.error('Error generating learning path:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
     return {
       path: null,
-      error: 'An unexpected error occurred. Please try again later.',
+      error: `An unexpected error occurred. Please try again later. Details: ${errorMessage}`,
     };
   }
 }

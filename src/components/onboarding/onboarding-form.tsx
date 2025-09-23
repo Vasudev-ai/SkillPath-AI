@@ -32,10 +32,6 @@ const formSchema = z.object({
   education: z.string().min(10, { message: 'Please describe your education.' }),
   skills: z.string().min(5, { message: 'Please list some of your skills.' }),
   aspirations: z.string().min(10, { message: 'What are your career aspirations?' }),
-  budget: z.string().optional().default(''),
-  time_commitment: z.string().optional().default(''),
-  device_access: z.array(z.string()).optional().default([]),
-  constraints: z.string().optional().default(''),
   consent: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the terms to proceed.',
   }),
@@ -101,8 +97,8 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
-    // We can omit the consent field before sending to the action
-    const profile: UserProfile = { ...values };
+    const { consent, ...profileData } = values;
+    const profile: UserProfile = profileData;
     
     const result = await generatePathAction(profile);
 

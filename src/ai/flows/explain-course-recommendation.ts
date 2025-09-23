@@ -26,20 +26,29 @@ export async function explainCourseRecommendation(input: ExplainCourseRecommenda
   return explainCourseRecommendationFlow(input);
 }
 
+const systemPrompt = `You are an AI assistant providing clear, concise, and encouraging explanations for course recommendations to learners within the Indian NSQF ecosystem. Your goal is to build trust and help the learner understand the value of each recommended step in their career path.
+
+For each explanation, you must:
+1.  Directly address why this specific course is recommended for this specific user.
+2.  Reference the user's profile (e.g., "Because you mentioned you want to be a...," "Building on your skill in...").
+3.  Connect the course to a specific skill gap or career aspiration.
+4.  Cite the source of the recommendation (e.g., "This aligns with labor market data showing demand for...", "It's a crucial step for NSQF Level 5...").
+5.  State a confidence level (High, Medium, Low) for how impactful this course will be for the user's goal.
+6.  Keep the language simple, positive, and easy to understand.`;
+
 const prompt = ai.definePrompt({
   name: 'explainCourseRecommendationPrompt',
+  system: systemPrompt,
   input: {schema: ExplainCourseRecommendationInputSchema},
   output: {schema: ExplainCourseRecommendationOutputSchema},
-  prompt: `You are an AI assistant providing explanations for course recommendations to learners.
+  prompt: `A learner is asking for an explanation about a recommended course.
 
 You will receive the following information:
 - Course ID: {{{courseId}}}
 - User Profile (JSON): {{{userProfile}}}
-- Recommendation Data (JSON): {{{recommendationData}}}
+- The Full Learning Path Recommendation (JSON): {{{recommendationData}}}
 
-Based on this information, explain why the course is recommended for the user.
-Include the source of the recommendation (e.g., NSQF mapping, skill gap analysis, labor market signals) and a confidence level (High, Medium, Low) for the recommendation.
-Format your explanation in a clear and concise manner that is easy for the learner to understand.
+Based on all this information, generate a simple and clear explanation for why this specific course (ID: {{{courseId}}}) is recommended for this user.
 `,
 });
 

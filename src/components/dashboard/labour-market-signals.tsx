@@ -24,6 +24,14 @@ const content = {
 }
 
 export function LabourMarketSignals({ signals, lang }: LabourMarketSignalsProps) {
+  const formatSalary = (salary: number) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0,
+    }).format(salary) + ' per annum';
+  }
+  
   return (
     <Card>
       <CardHeader>
@@ -37,14 +45,14 @@ export function LabourMarketSignals({ signals, lang }: LabourMarketSignalsProps)
           <IndianRupee className="h-5 w-5 mr-3 mt-1 text-muted-foreground" />
           <div>
             <h4 className="font-semibold">{content[lang].salary}</h4>
-            <p className="text-lg font-bold text-primary">{signals.average_salary || 'N/A'}</p>
+            <p className="text-lg font-bold text-primary">{signals.avg_salary_inr ? formatSalary(signals.avg_salary_inr) : 'N/A'}</p>
           </div>
         </div>
         <div className="flex items-start">
           <TrendingUp className="h-5 w-5 mr-3 mt-1 text-muted-foreground" />
           <div>
             <h4 className="font-semibold">{content[lang].demand}</h4>
-            <p className="text-lg font-bold text-primary">{signals.demand_index ? `${(signals.demand_index * 100).toFixed(0)}%` : 'N/A'}</p>
+            <p className="text-lg font-bold text-primary">{signals.demand_index ? `${signals.demand_index.toFixed(0)}%` : 'N/A'}</p>
           </div>
         </div>
         <div className="flex items-start">
