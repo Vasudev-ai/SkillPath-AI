@@ -1,16 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Loader2, Play, Pause, X, Bot } from 'lucide-react';
+import { Loader2, Play, Pause, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { textToSpeechAction } from '@/app/actions';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader } from '../ui/card';
+import { AnimatedAvatar } from './animated-avatar';
 
 interface SkillPathMitraProps {
   summary: string;
@@ -39,7 +37,6 @@ export function SkillPathMitra({ summary, lang, userName }: SkillPathMitraProps)
   const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
   const t = content[lang];
-  const avatarImage = PlaceHolderImages.find(img => img.id === 'user-avatar-1');
 
   useEffect(() => {
     // Reset state when summary or lang changes
@@ -114,13 +111,9 @@ export function SkillPathMitra({ summary, lang, userName }: SkillPathMitraProps)
            >
              <Card className="glass-card mb-4 shadow-2xl">
                <CardHeader className='flex-row items-center gap-3 p-4'>
-                 <Avatar className="h-12 w-12 border-2 border-primary">
-                    {avatarImage ? (
-                        <AvatarImage src={avatarImage.imageUrl} alt="SkillPath Mitra" />
-                    ) : (
-                        <AvatarFallback><Bot /></AvatarFallback>
-                    )}
-                 </Avatar>
+                 <div className='w-12 h-12'>
+                    <AnimatedAvatar />
+                 </div>
                  <div className='flex-1'>
                     <h3 className='font-bold text-foreground'>SkillPath Mitra</h3>
                     <p className='text-xs text-muted-foreground'>{t.welcome}</p>
@@ -145,7 +138,7 @@ export function SkillPathMitra({ summary, lang, userName }: SkillPathMitraProps)
           <Button
             onClick={toggleMitra}
             size="icon"
-            className="rounded-full w-16 h-16 shadow-lg bg-primary hover:bg-primary/90"
+            className="rounded-full w-16 h-16 shadow-lg bg-primary hover:bg-primary/90 flex items-center justify-center p-0 overflow-hidden"
           >
             <AnimatePresence mode="wait">
               {isOpen ? (
@@ -153,14 +146,8 @@ export function SkillPathMitra({ summary, lang, userName }: SkillPathMitraProps)
                   <X size={32} />
                 </motion.div>
               ) : (
-                <motion.div key="avatar" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}>
-                   <Avatar className="w-14 h-14 border-2 border-primary-foreground/50">
-                    {avatarImage ? (
-                        <AvatarImage src={avatarImage.imageUrl} alt="SkillPath Mitra" />
-                    ) : (
-                        <AvatarFallback><Bot /></AvatarFallback>
-                    )}
-                 </Avatar>
+                <motion.div key="avatar" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} className="w-full h-full">
+                   <AnimatedAvatar isWakingUp={isOpen} />
                 </motion.div>
               )}
             </AnimatePresence>
