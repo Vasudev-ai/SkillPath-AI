@@ -45,12 +45,10 @@ export function Header({ lang = 'en', setLang, showToggle = true, showLoginButto
             </Button>
           )}
           {showLoginButton && (
-             <Link href="/login" legacyBehavior>
-                <Button variant="default" asChild>
-                    <a>
-                        Login / Sign Up
-                        <LogIn className='ml-2'/>
-                    </a>
+             <Link href="/login">
+                <Button variant="default">
+                    Login / Sign Up
+                    <LogIn className='ml-2'/>
                 </Button>
              </Link>
           )}

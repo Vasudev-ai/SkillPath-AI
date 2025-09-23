@@ -33,7 +33,7 @@ export function LandingPage() {
           <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground mb-8">
             India's first vernacular Career GPS, dynamically syncing your learning journey with live job market opportunities.
           </p>
-          <Link href="/onboarding" legacyBehavior>
+          <Link href="/onboarding">
             <Button size="lg" className="text-lg">
               Generate Your Free Path
               <ArrowRight className="ml-2" />
@@ -79,7 +79,7 @@ export function LandingPage() {
             <div className='container mx-auto'>
                 <h2 className="text-3xl font-bold font-headline mb-4">Ready to find your path?</h2>
                 <p className="text-muted-foreground mb-8">It takes less than 5 minutes to get your personalized career roadmap.</p>
-                <Link href="/onboarding" legacyBehavior>
+                <Link href="/onboarding">
                     <Button size="lg">
                     Start Building Your Future
                     <ArrowRight className="ml-2" />

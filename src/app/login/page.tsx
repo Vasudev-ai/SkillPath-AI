@@ -24,11 +24,9 @@ export default function LoginPage() {
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" placeholder="you@example.com" required />
               </div>
-              <Link href="/onboarding" legacyBehavior>
-                <Button className="w-full" asChild>
-                  <a>
-                    Continue with Email <ArrowRight className="ml-2" />
-                  </a>
+              <Link href="/onboarding">
+                <Button className="w-full">
+                  Continue with Email <ArrowRight className="ml-2" />
                 </Button>
               </Link>
             </div>
