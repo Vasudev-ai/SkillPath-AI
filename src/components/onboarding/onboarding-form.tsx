@@ -29,6 +29,7 @@ import { Progress } from '../ui/progress';
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
   education: z.string().min(10, { message: 'Please describe your education.' }),
   skills: z.string().min(5, { message: 'Please list some of your skills.' }),
   aspirations: z.string().min(10, { message: 'What are your career aspirations?' }),
@@ -39,12 +40,14 @@ const formSchema = z.object({
 
 const content = {
     en: {
-        title: "Let's build your future.",
+        title: "Create Your Account",
         subtitle: "Fill out your profile to get a personalized, AI-powered career path.",
         name: "Full Name",
         name_placeholder: "e.g., Anjali Sharma",
         email: "Email Address",
         email_placeholder: "you@example.com",
+        password: "Password",
+        password_placeholder: "••••••••",
         education: "Highest Education",
         education_placeholder: "e.g., 12th Pass (Science), B.Com Graduate",
         skills: "Current Skills",
@@ -52,19 +55,21 @@ const content = {
         aspirations: "Career Aspirations",
         aspirations_placeholder: "e.g., I want to become a data analyst in a tech company.",
         consent_label: "I consent to my data being used to generate a personalized learning path.",
-        submit_button: "Generate My Path",
+        submit_button: "Create Account & Generate Path",
         loading_text: "Our AI is crafting your path...",
         error_title: "Uh oh! Something went wrong.",
         prev_button: "Previous",
         next_button: "Next",
     },
     hi: {
-        title: "आइए आपका भविष्य बनाएं।",
+        title: "अपना खाता बनाएं",
         subtitle: "एक व्यक्तिगत, एआई-संचालित करियर पथ प्राप्त करने के लिए अपनी प्रोफ़ाइल भरें।",
         name: "पूरा नाम",
         name_placeholder: "उदाहरण, अंजलि शर्मा",
         email: "ईमेल पता",
         email_placeholder: "you@example.com",
+        password: "पासवर्ड",
+        password_placeholder: "••••••••",
         education: "उच्चतम शिक्षा",
         education_placeholder: "उदाहरण, 12वीं पास (विज्ञान), बी.कॉम स्नातक",
         skills: "वर्तमान कौशल",
@@ -72,7 +77,7 @@ const content = {
         aspirations: "करियर आकांक्षाएं",
         aspirations_placeholder: "उदाहरण, मैं एक टेक कंपनी में डेटा विश्लेषक बनना चाहता हूं।",
         consent_label: "मैं व्यक्तिगत सीखने का मार्ग बनाने के लिए अपने डेटा के उपयोग के लिए सहमति देता हूं।",
-        submit_button: "मेरा रास्ता बनाएं",
+        submit_button: "खाता बनाएं और पथ बनाएं",
         loading_text: "हमारा एआई आपके लिए रास्ता बना रहा है...",
         error_title: "उफ़! कुछ गलत हो गया।",
         prev_button: "पिछला",
@@ -92,6 +97,7 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
     defaultValues: {
       name: '',
       email: '',
+      password: '',
       education: '',
       skills: '',
       aspirations: '',
@@ -99,13 +105,16 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
     },
   });
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progress = ((step + 1) / totalSteps) * 100;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     
-    const { consent, ...profileData } = values;
+    // Store user profile for login
+    localStorage.setItem('userProfile', JSON.stringify(values));
+
+    const { consent, password, ...profileData } = values;
     const profile: UserProfile = profileData;
     
     const result = await generatePathAction(profile);
@@ -126,11 +135,12 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
   const t = content[lang];
   
   const nextStep = async () => {
-    let fields: ("name" | "email" | "education" | "skills" | "aspirations")[] = [];
+    let fields: ("name" | "email" | "password" | "education" | "skills" | "aspirations")[] = [];
     if (step === 0) fields = ["name"];
     if (step === 1) fields = ["email"];
-    if (step === 2) fields = ["education"];
-    if (step === 3) fields = ["skills"];
+    if (step === 2) fields = ["password"];
+    if (step === 3) fields = ["education"];
+    if (step === 4) fields = ["skills"];
 
     const isValid = await form.trigger(fields);
     if(isValid) {
@@ -176,6 +186,22 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
         );
       case 2:
         return (
+            <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>{t.password}</FormLabel>
+                    <FormControl>
+                    <Input type="password" placeholder={t.password_placeholder} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+        );
+      case 3:
+        return (
           <FormField
             control={form.control}
             name="education"
@@ -190,7 +216,7 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
             )}
           />
         );
-      case 3:
+      case 4:
         return (
           <FormField
             control={form.control}
@@ -206,7 +232,7 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
             )}
           />
         );
-      case 4:
+      case 5:
         return (
           <>
             <FormField
