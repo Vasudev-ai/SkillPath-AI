@@ -56,7 +56,7 @@ export function AnalyticsDashboard() {
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
-        <Card>
+        <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Learners</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -66,7 +66,7 @@ export function AnalyticsDashboard() {
             <p className="text-xs text-muted-foreground">+20.1% from last month</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Top Career Aspiration</CardTitle>
             <Briefcase className="h-4 w-4 text-muted-foreground" />
@@ -76,7 +76,7 @@ export function AnalyticsDashboard() {
             <p className="text-xs text-muted-foreground">Most popular choice</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Top Skill Gap</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
@@ -89,7 +89,7 @@ export function AnalyticsDashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-      <Card>
+      <Card className="glass-card">
           <CardHeader>
             <CardTitle>Learner Growth</CardTitle>
             <CardDescription>Number of new learners per month.</CardDescription>
@@ -100,14 +100,14 @@ export function AnalyticsDashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip wrapperClassName='glass-card' />
                 <Legend />
                 <Line type="monotone" dataKey="learners" stroke="hsl(var(--primary))" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass-card">
           <CardHeader>
             <CardTitle>NSQF Level Adoption</CardTitle>
             <CardDescription>Distribution of learners across NSQF levels.</CardDescription>
@@ -118,14 +118,14 @@ export function AnalyticsDashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip wrapperClassName='glass-card'/>
                 <Legend />
                 <Bar dataKey="learners" fill="hsl(var(--primary))" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 glass-card">
           <CardHeader>
             <CardTitle>Top 5 Skill Gaps in Cohort</CardTitle>
             <CardDescription>Most common skills learners need to acquire.</CardDescription>
@@ -147,7 +147,7 @@ export function AnalyticsDashboard() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip wrapperClassName='glass-card' />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

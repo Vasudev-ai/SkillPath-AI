@@ -1,10 +1,9 @@
 import { AnalyticsDashboard } from '@/components/admin/analytics-dashboard';
-import { Header } from '@/components/layout/header';
 
 export default function AdminPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="py-4 px-4 md:px-6 w-full border-b">
+      <header className="py-4 px-4 md:px-6 w-full border-b bg-background/50 backdrop-blur-lg sticky top-0 z-40">
         <div className="container mx-auto flex items-center justify-between">
             <h1 className="text-xl font-bold font-headline text-foreground">
               Trainer & Policymaker Panel
