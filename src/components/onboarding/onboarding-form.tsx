@@ -21,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { generatePathAction } from '@/app/actions';
 import type { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Progress } from '../ui/progress';
@@ -38,10 +37,19 @@ const formSchema = z.object({
   }),
 });
 
+const signupSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  email: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+});
+
+
 const content = {
     en: {
         title: "Create Your Account",
-        subtitle: "Fill out your profile to get a personalized, AI-powered career path.",
+        subtitle: "Join SkillPath AI to start your personalized career journey.",
+        path_title: "Build Your Learning Path",
+        path_subtitle: "Fill out your profile to get a personalized, AI-powered career path.",
         name: "Full Name",
         name_placeholder: "e.g., Anjali Sharma",
         email: "Email Address",
@@ -55,7 +63,8 @@ const content = {
         aspirations: "Career Aspirations",
         aspirations_placeholder: "e.g., I want to become a data analyst in a tech company.",
         consent_label: "I consent to my data being used to generate a personalized learning path.",
-        submit_button: "Create Account & Generate Path",
+        submit_button: "Generate Path",
+        signup_button: "Create Account",
         loading_text: "Our AI is crafting your path...",
         error_title: "Uh oh! Something went wrong.",
         prev_button: "Previous",
@@ -63,7 +72,9 @@ const content = {
     },
     hi: {
         title: "अपना खाता बनाएं",
-        subtitle: "एक व्यक्तिगत, एआई-संचालित करियर पथ प्राप्त करने के लिए अपनी प्रोफ़ाइल भरें।",
+        subtitle: "अपनी व्यक्तिगत करियर यात्रा शुरू करने के लिए स्किलपाथ एआई से जुड़ें।",
+        path_title: "अपनी सीखने की राह बनाएं",
+        path_subtitle: "एक व्यक्तिगत, एआई-संचालित करियर पथ प्राप्त करने के लिए अपनी प्रोफ़ाइल भरें।",
         name: "पूरा नाम",
         name_placeholder: "उदाहरण, अंजलि शर्मा",
         email: "ईमेल पता",
@@ -77,7 +88,8 @@ const content = {
         aspirations: "करियर आकांक्षाएं",
         aspirations_placeholder: "उदाहरण, मैं एक टेक कंपनी में डेटा विश्लेषक बनना चाहता हूं।",
         consent_label: "मैं व्यक्तिगत सीखने का मार्ग बनाने के लिए अपने डेटा के उपयोग के लिए सहमति देता हूं।",
-        submit_button: "खाता बनाएं और पथ बनाएं",
+        submit_button: "पथ बनाएं",
+        signup_button: "खाता बनाएं",
         loading_text: "हमारा एआई आपके लिए रास्ता बना रहा है...",
         error_title: "उफ़! कुछ गलत हो गया।",
         prev_button: "पिछला",
@@ -85,62 +97,67 @@ const content = {
     }
 }
 
+type OnboardingFormProps = {
+    lang?: 'en' | 'hi';
+    userProfile?: UserProfile;
+    onSubmit?: (values: UserProfile) => void;
+    isLoading?: boolean;
+}
 
-export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
+
+export function OnboardingForm({ lang = 'en', userProfile, onSubmit, isLoading = false }: OnboardingFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(0);
 
+  const isSignupFlow = !userProfile;
+
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(isSignupFlow ? signupSchema : formSchema),
     defaultValues: {
-      name: '',
-      email: '',
+      name: userProfile?.name || '',
+      email: userProfile?.email || '',
       password: '',
-      education: '',
-      skills: '',
-      aspirations: '',
+      education: userProfile?.education || '',
+      skills: userProfile?.skills || '',
+      aspirations: userProfile?.aspirations || '',
       consent: false,
     },
   });
 
-  const totalSteps = 6;
+  const totalSteps = isSignupFlow ? 3 : 4;
   const progress = ((step + 1) / totalSteps) * 100;
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    
-    // Store user profile for login
-    localStorage.setItem('userProfile', JSON.stringify(values));
+  async function handleSignup(values: z.infer<typeof formSchema>) {
+    // In signup flow, we just save profile and redirect
+    const { consent, ...profileData } = values;
+    localStorage.setItem('userProfile', JSON.stringify(profileData));
+    toast({
+        title: "Account Created!",
+        description: "You can now log in.",
+    });
+    router.push('/login');
+  }
 
-    const { consent, password, ...profileData } = values;
-    const profile: UserProfile = profileData;
-    
-    const result = await generatePathAction(profile);
-
-    if (result.path) {
-      localStorage.setItem('learningPath', JSON.stringify(result.path));
-      router.push('/dashboard');
-    } else {
-      toast({
-        variant: 'destructive',
-        title: content[lang].error_title,
-        description: result.error || 'An unknown error occurred.',
-      });
-      setIsLoading(false);
+  async function handlePathGeneration(values: z.infer<typeof formSchema>) {
+    if (onSubmit && userProfile) {
+        const { password, consent, ...profileData } = values;
+        onSubmit(profileData as UserProfile);
     }
   }
 
   const t = content[lang];
   
   const nextStep = async () => {
-    let fields: ("name" | "email" | "password" | "education" | "skills" | "aspirations")[] = [];
-    if (step === 0) fields = ["name"];
-    if (step === 1) fields = ["email"];
-    if (step === 2) fields = ["password"];
-    if (step === 3) fields = ["education"];
-    if (step === 4) fields = ["skills"];
+    let fields: (keyof z.infer<typeof formSchema>)[] = [];
+    if(isSignupFlow) {
+        if (step === 0) fields = ["name"];
+        if (step === 1) fields = ["email"];
+    } else {
+        if (step === 0) fields = ["education"];
+        if (step === 1) fields = ["skills"];
+        if (step === 2) fields = ["aspirations"];
+    }
 
     const isValid = await form.trigger(fields);
     if(isValid) {
@@ -150,129 +167,24 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
 
   const prevStep = () => setStep(prev => Math.max(prev - 1, 0));
   
-  const renderStep = () => {
-    switch (step) {
-      case 0:
-        return (
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t.name}</FormLabel>
-                <FormControl>
-                  <Input placeholder={t.name_placeholder} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        );
-      case 1:
-        return (
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t.email}</FormLabel>
-                <FormControl>
-                  <Input placeholder={t.email_placeholder} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        );
-      case 2:
-        return (
-            <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>{t.password}</FormLabel>
-                    <FormControl>
-                    <Input type="password" placeholder={t.password_placeholder} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-        );
-      case 3:
-        return (
-          <FormField
-            control={form.control}
-            name="education"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t.education}</FormLabel>
-                <FormControl>
-                  <Textarea placeholder={t.education_placeholder} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        );
-      case 4:
-        return (
-          <FormField
-            control={form.control}
-            name="skills"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t.skills}</FormLabel>
-                <FormControl>
-                  <Textarea placeholder={t.skills_placeholder} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        );
-      case 5:
-        return (
-          <>
-            <FormField
-              control={form.control}
-              name="aspirations"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.aspirations}</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder={t.aspirations_placeholder} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="consent"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm mt-8 bg-background/50">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>{t.consent_label}</FormLabel>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-          </>
-        );
-      default:
-        return null;
-    }
+  const renderSignupSteps = () => {
+      switch(step) {
+          case 0: return <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>{t.name}</FormLabel><FormControl><Input placeholder={t.name_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+          case 1: return <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>{t.email}</FormLabel><FormControl><Input placeholder={t.email_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+          case 2: return <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>{t.password}</FormLabel><FormControl><Input type="password" placeholder={t.password_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+          default: return null;
+      }
   }
 
+  const renderPathGenSteps = () => {
+      switch(step) {
+          case 0: return <FormField control={form.control} name="education" render={({ field }) => (<FormItem><FormLabel>{t.education}</FormLabel><FormControl><Textarea placeholder={t.education_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+          case 1: return <FormField control={form.control} name="skills" render={({ field }) => (<FormItem><FormLabel>{t.skills}</FormLabel><FormControl><Textarea placeholder={t.skills_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+          case 2: return <FormField control={form.control} name="aspirations" render={({ field }) => (<FormItem><FormLabel>{t.aspirations}</FormLabel><FormControl><Textarea placeholder={t.aspirations_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+          case 3: return <FormField control={form.control} name="consent" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>{t.consent_label}</FormLabel><FormMessage /></div></FormItem>)} />;
+          default: return null;
+      }
+  }
 
   return (
     <motion.div
@@ -281,16 +193,15 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
       transition={{ duration: 0.5 }}
       className="max-w-2xl mx-auto w-full"
     >
-      <Card className="glass-card">
+      <Card className={isSignupFlow ? "glass-card" : "bg-transparent border-0 shadow-none"}>
         <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl md:text-4xl text-primary">{t.title}</CardTitle>
-          <CardDescription>{t.subtitle}</CardDescription>
+          <CardTitle className="font-headline text-3xl md:text-4xl text-primary">{isSignupFlow ? t.title : t.path_title}</CardTitle>
+          <CardDescription>{isSignupFlow ? t.subtitle : t.path_subtitle}</CardDescription>
         </CardHeader>
         <CardContent>
           <Progress value={progress} className="mb-8 h-2" />
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                
+            <form onSubmit={form.handleSubmit(isSignupFlow ? handleSignup : handlePathGeneration)} className="space-y-6">
                 <motion.div
                     key={step}
                     initial={{ x: 30, opacity: 0 }}
@@ -299,34 +210,33 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
                     transition={{ duration: 0.3 }}
                     className="space-y-6 min-h-[150px]"
                 >
-                    {renderStep()}
+                    {isSignupFlow ? renderSignupSteps() : renderPathGenSteps()}
                 </motion.div>
 
                 <div className="flex justify-between pt-4">
-                {step > 0 && !isLoading && (
-                    <Button type="button" variant="outline" onClick={prevStep}>
-                        {t.prev_button}
-                    </Button>
-                )}
-                <div className='flex-grow' />
-                {step < totalSteps - 1 && !isLoading && (
-                    <Button type="button" onClick={nextStep}>
-                        {t.next_button}
-                    </Button>
-                )}
-                {step === totalSteps - 1 && (
-                    <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {t.loading_text}
-                      </>
-                    ) : (
-                      t.submit_button
+                    {step > 0 && !isLoading && (
+                        <Button type="button" variant="outline" onClick={prevStep}>
+                            {t.prev_button}
+                        </Button>
                     )}
-                  </Button>
-                )}
-
+                    <div className='flex-grow' />
+                    {step < totalSteps - 1 && !isLoading && (
+                        <Button type="button" onClick={nextStep}>
+                            {t.next_button}
+                        </Button>
+                    )}
+                    {step === totalSteps - 1 && (
+                        <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
+                        {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t.loading_text}
+                        </>
+                        ) : (
+                        isSignupFlow ? t.signup_button : t.submit_button
+                        )}
+                    </Button>
+                    )}
               </div>
             </form>
           </Form>

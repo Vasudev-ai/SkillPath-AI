@@ -6,6 +6,7 @@ export type UserProfile = {
   education: string;
   skills: string;
   aspirations: string;
+  password?: string;
 };
 
 // The output from the AI flow is the learning path

@@ -132,8 +132,9 @@ const generatePersonalizedLearningPathFlow = ai.defineFlow(
     outputSchema: GeneratePersonalizedLearningPathOutputSchema,
   },
   async input => {
-    // In a real app, we'd generate a real UUID
-    const userId = "user-" + Math.random().toString(36).substring(7);
+    // In a real app, we'd get the user ID from the session
+    const userProfile = JSON.parse(input.profile);
+    const userId = userProfile.email || "user-" + Math.random().toString(36).substring(7);
     
     const {output} = await generatePersonalizedLearningPathPrompt(input);
     
@@ -150,9 +151,11 @@ const generatePersonalizedLearningPathFlow = ai.defineFlow(
         finalOutput.labour_market_signals.avg_salary_inr = parseInt(salaryString.replace(/[^0-9]/g, ''), 10) || 0;
     }
 
-    if (finalOutput.nsqf_mapping.length > 0 && typeof finalOutput.nsqf_mapping[0].nsqf_level === 'string') {
+    if (finalOutput.nsqf_mapping && finalOutput.nsqf_mapping.length > 0 && typeof finalOutput.nsqf_mapping[0].nsqf_level === 'string') {
       finalOutput.nsqf_mapping.forEach(m => {
-        m.nsqf_level = parseInt(m.nsqf_level as string, 10) || 0;
+        if(typeof m.nsqf_level === 'string') {
+           m.nsqf_level = parseInt(m.nsqf_level, 10) || 0;
+        }
       });
     }
 
