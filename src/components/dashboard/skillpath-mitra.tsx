@@ -65,11 +65,12 @@ export function SkillPathMitra({ summary, lang }: SkillPathMitraProps) {
     }
 
     setIsLoading(true);
-    const textToConvert =
-      lang === 'hi'
-        ? summary
-        : `Hello! Here is a summary of your personalized learning path. ${summary}`;
-    const result = await textToSpeechAction(textToConvert);
+    
+    // Make the AI summary more conversational
+    const textToConvert = `Hello! My name is SkillPath Mitra, your personal AI guide. Based on your profile, I have generated a learning path for you. Here is a quick summary: ${summary}`;
+    const hindiTextToConvert = `नमस्ते! मेरा नाम स्किलपाथ मित्र है, आपका व्यक्तिगत AI गाइड। आपकी प्रोफ़ाइल के आधार पर, मैंने आपके लिए एक सीखने का मार्ग तैयार किया है। यहाँ एक संक्षिप्त सारांश है: ${summary}`;
+
+    const result = await textToSpeechAction(lang === 'hi' ? hindiTextToConvert : textToConvert);
     setIsLoading(false);
 
     if (result.audioDataUri) {
@@ -96,8 +97,8 @@ export function SkillPathMitra({ summary, lang }: SkillPathMitraProps) {
   
   const toggleMitra = () => {
       setIsOpen(!isOpen);
-      if(isPlaying) {
-          audioRef.current?.pause();
+      if(isPlaying && audioRef.current) {
+          audioRef.current.pause();
           setIsPlaying(false);
       }
   }
