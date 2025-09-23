@@ -2,6 +2,7 @@
 
 import { generatePersonalizedLearningPath } from '@/ai/flows/generate-personalized-learning-path';
 import { interviewFlow } from '@/ai/flows/interview-flow';
+import { textToSpeech } from '@/ai/flows/text-to-speech';
 import type { UserProfile, LearningPath, InterviewMessage } from '@/lib/types';
 import { z } from 'zod';
 
@@ -78,3 +79,27 @@ export async function interviewAction(
     };
   }
 }
+
+export async function textToSpeechAction(
+    text: string
+  ): Promise<{ audioDataUri: string | null; error?: string }> {
+    if (!text.trim()) {
+      return { audioDataUri: null, error: 'Input text cannot be empty.' };
+    }
+  
+    try {
+      const result = await textToSpeech({ text });
+      if (result.audioDataUri) {
+        return { audioDataUri: result.audioDataUri };
+      } else {
+        return { audioDataUri: null, error: 'Failed to generate audio.' };
+      }
+    } catch (error) {
+      console.error('Error in text-to-speech flow:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during TTS processing.';
+      return {
+        audioDataUri: null,
+        error: `An unexpected error occurred. Details: ${errorMessage}`,
+      };
+    }
+  }

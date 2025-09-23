@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { SkillPathMitra } from './skillpath-mitra';
 
 interface DashboardClientProps {
   path: LearningPath;
@@ -67,9 +68,12 @@ export function DashboardClient({ path, lang }: DashboardClientProps) {
       initial="hidden"
       animate="visible"
     >
-      <motion.div className="mb-8" variants={itemVariants}>
-        <h2 className="text-3xl font-bold font-headline text-foreground">{content[lang].title}</h2>
-        <p className="text-muted-foreground">{content[lang].subtitle}</p>
+      <motion.div className="mb-8 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-center" variants={itemVariants}>
+        <div>
+            <h2 className="text-3xl font-bold font-headline text-foreground">{content[lang].title}</h2>
+            <p className="text-muted-foreground">{content[lang].subtitle}</p>
+        </div>
+        <SkillPathMitra summary={summary} lang={lang}/>
       </motion.div>
 
       <motion.div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6" variants={containerVariants}>
