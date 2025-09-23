@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generatePathAction } from '@/app/actions';
 import type { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Progress } from '../ui/progress';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -81,6 +82,7 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState(0);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,6 +95,9 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
       consent: false,
     },
   });
+
+  const totalSteps = 5;
+  const progress = ((step + 1) / totalSteps) * 100;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -116,6 +121,9 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
   }
 
   const t = content[lang];
+  
+  const nextStep = () => setStep(prev => Math.min(prev + 1, totalSteps - 1));
+  const prevStep = () => setStep(prev => Math.max(prev - 1, 0));
 
   return (
     <motion.div
@@ -130,107 +138,140 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
           <CardDescription>{t.subtitle}</CardDescription>
         </CardHeader>
         <CardContent>
+          <Progress value={progress} className="mb-8" />
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="grid md:grid-cols-2 gap-8">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.name}</FormLabel>
-                      <FormControl>
-                        <Input placeholder={t.name_placeholder} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t.email}</FormLabel>
-                      <FormControl>
-                        <Input placeholder={t.email_placeholder} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {step === 0 && (
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>{t.name}</FormLabel>
+                                <FormControl>
+                                    <Input placeholder={t.name_placeholder} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </motion.div>
+                )}
+                {step === 1 && (
+                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>{t.email}</FormLabel>
+                                <FormControl>
+                                    <Input placeholder={t.email_placeholder} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                     </motion.div>
+                )}
+
+                {step === 2 && (
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                        <FormField
+                            control={form.control}
+                            name="education"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t.education}</FormLabel>
+                                <FormControl>
+                                <Textarea placeholder={t.education_placeholder} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    </motion.div>
+                )}
+                {step === 3 && (
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                        <FormField
+                            control={form.control}
+                            name="skills"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>{t.skills}</FormLabel>
+                                <FormControl>
+                                <Textarea placeholder={t.skills_placeholder} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    </motion.div>
+                )}
+                
+                {step === 4 && (
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                        <FormField
+                            control={form.control}
+                            name="aspirations"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>{t.aspirations}</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder={t.aspirations_placeholder} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="consent"
+                            render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm mt-8">
+                                <FormControl>
+                                <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                <FormLabel>{t.consent_label}</FormLabel>
+                                </div>
+                            </FormItem>
+                            )}
+                        />
+                    </motion.div>
+                )}
+
+                <div className="flex justify-between">
+                {step > 0 && (
+                    <Button type="button" variant="outline" onClick={prevStep}>
+                        Previous
+                    </Button>
+                )}
+                {step < totalSteps - 1 && (
+                    <Button type="button" onClick={nextStep} className="ml-auto">
+                        Next
+                    </Button>
+                )}
+                {step === totalSteps - 1 && (
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {t.loading_text}
+                      </>
+                    ) : (
+                      t.submit_button
+                    )}
+                  </Button>
+                )}
+
               </div>
-
-              <FormField
-                control={form.control}
-                name="education"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t.education}</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder={t.education_placeholder} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="skills"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t.skills}</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder={t.skills_placeholder} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="aspirations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t.aspirations}</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder={t.aspirations_placeholder} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="consent"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>{t.consent_label}</FormLabel>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t.loading_text}
-                  </>
-                ) : (
-                  t.submit_button
-                )}
-              </Button>
             </form>
           </Form>
         </CardContent>

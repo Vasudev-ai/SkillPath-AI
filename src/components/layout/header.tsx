@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Languages } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type HeaderProps = {
   lang: 'en' | 'hi';
@@ -11,7 +12,10 @@ type HeaderProps = {
 
 export function Header({ lang, setLang, showToggle = true }: HeaderProps) {
   return (
-    <header className="py-4 px-4 md:px-6 w-full border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+    <header className={cn(
+      "py-4 px-4 md:px-6 w-full border-b",
+      "sticky top-0 z-50 bg-background/80 backdrop-blur-sm"
+    )}>
       <div className="container mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <Logo />

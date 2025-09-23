@@ -31,7 +31,7 @@ export function DashboardWrapper() {
 
   if (loading || !path) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-background">
         <Header lang={lang} setLang={setLang} showToggle={false} />
         <main className="container mx-auto p-4 md:p-6">
           <div className="space-y-6">
@@ -76,7 +76,7 @@ export function DashboardWrapper() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header lang={lang} setLang={setLang} />
       <main className="flex-1">
         <DashboardClient path={path} lang={lang} />

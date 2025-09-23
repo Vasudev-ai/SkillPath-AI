@@ -7,8 +7,8 @@ export function OnboardingWrapper() {
   const [lang, setLang] = useState<'en' | 'hi'>('en');
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header lang={lang} setLang={setLang} showToggle={false} />
+    <div className="flex flex-col min-h-screen bg-background">
+      <Header lang={lang} setLang={setLang} />
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
         <OnboardingForm lang={lang} />
       </main>
