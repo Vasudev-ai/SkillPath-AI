@@ -21,7 +21,7 @@ const content = {
 
 export function SkillGap({ skills, lang }: SkillGapProps) {
   return (
-    <Card>
+    <Card className="glass-card h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <Wrench className="text-primary" />
@@ -33,7 +33,7 @@ export function SkillGap({ skills, lang }: SkillGapProps) {
         <div className="flex flex-wrap gap-2">
           {skills && skills.length > 0 ? (
             skills.map((skill, index) => (
-              <Badge key={index} variant="default" className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20">
+              <Badge key={index} variant="default" className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 text-sm py-1 px-3">
                 {skill.skill}
               </Badge>
             ))

@@ -26,7 +26,7 @@ export function CareerMatchScore({ score, lang }: CareerMatchScoreProps) {
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
   return (
-    <Card>
+    <Card className="glass-card h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <Target className="text-primary" />

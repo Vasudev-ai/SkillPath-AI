@@ -33,7 +33,7 @@ export function LabourMarketSignals({ signals, lang }: LabourMarketSignalsProps)
   }
   
   return (
-    <Card>
+    <Card className="glass-card h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <TrendingUp className="text-primary" />

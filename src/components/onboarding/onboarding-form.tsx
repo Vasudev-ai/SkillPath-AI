@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -227,7 +226,7 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
               control={form.control}
               name="consent"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm mt-8">
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm mt-8 bg-background/50">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -254,17 +253,17 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-2xl mx-auto"
+      className="max-w-2xl mx-auto w-full"
     >
-      <Card>
+      <Card className="glass-card">
         <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl md:text-4xl">{t.title}</CardTitle>
+          <CardTitle className="font-headline text-3xl md:text-4xl text-primary">{t.title}</CardTitle>
           <CardDescription>{t.subtitle}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Progress value={progress} className="mb-8" />
+          <Progress value={progress} className="mb-8 h-2" />
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 
                 <motion.div
                     key={step}
@@ -272,19 +271,19 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: -30, opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-8"
+                    className="space-y-6 min-h-[150px]"
                 >
                     {renderStep()}
                 </motion.div>
 
                 <div className="flex justify-between pt-4">
-                {step > 0 && (
+                {step > 0 && !isLoading && (
                     <Button type="button" variant="outline" onClick={prevStep}>
                         {t.prev_button}
                     </Button>
                 )}
                 <div className='flex-grow' />
-                {step < totalSteps - 1 && (
+                {step < totalSteps - 1 && !isLoading && (
                     <Button type="button" onClick={nextStep}>
                         {t.next_button}
                     </Button>

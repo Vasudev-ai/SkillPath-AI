@@ -45,15 +45,15 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
   });
 
   return (
-    <Card className="h-full">
+    <Card className="h-full glass-card">
       <CardHeader>
-        <CardTitle className="font-headline">{content[lang].title}</CardTitle>
+        <CardTitle className="font-headline text-primary">{content[lang].title}</CardTitle>
         <CardDescription>{content[lang].subtitle}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="relative pl-6">
           {/* Vertical line */}
-          <div className="absolute left-9 top-0 h-full w-0.5 bg-border" />
+          <div className="absolute left-9 top-0 h-full w-0.5 bg-border/50" />
 
           <div className="space-y-8">
             {pathWithDetails.map((step, index) => (
@@ -62,7 +62,7 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
                   <span className="font-bold">{index + 1}</span>
                 </div>
                 <div className="ml-12 w-full">
-                  <Card className="bg-card">
+                  <Card className="bg-white/60 dark:bg-black/30">
                     <CardHeader>
                       <div className='flex justify-between items-start'>
                         <div>
@@ -89,6 +89,7 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
                 </div>
                 <div className="ml-12 pt-1">
                     <h3 className="text-lg font-bold font-headline text-foreground">{content[lang].goal}</h3>
+                    <p className="text-muted-foreground">Congratulations on completing your path!</p>
                 </div>
               </div>
           </div>

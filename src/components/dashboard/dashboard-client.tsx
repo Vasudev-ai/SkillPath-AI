@@ -5,9 +5,10 @@ import { RecommendedPath } from './recommended-path';
 import { SkillGap } from './skill-gap';
 import { LabourMarketSignals } from './labour-market-signals';
 import { AlternativePaths } from './alternative-paths';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface DashboardClientProps {
   path: LearningPath;
@@ -35,36 +36,72 @@ export function DashboardClient({ path, lang }: DashboardClientProps) {
   const handlePrint = () => {
     window.print();
   };
+  
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 100,
+      },
+    },
+  };
+
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8">
-      <div className="mb-8">
+    <motion.div 
+      className="container mx-auto p-4 md:p-6 lg:p-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div className="mb-8" variants={itemVariants}>
         <h2 className="text-3xl font-bold font-headline text-foreground">{content[lang].title}</h2>
         <p className="text-muted-foreground">{content[lang].subtitle}</p>
-      </div>
+      </motion.div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
-        <CareerMatchScore score={path.career_match_score} lang={lang} />
-        <SkillGap skills={path.skill_gap} lang={lang} />
-        <LabourMarketSignals signals={path.labour_market_signals} lang={lang} />
-      </div>
+      <motion.div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6" variants={containerVariants}>
+        <motion.div variants={itemVariants}>
+          <CareerMatchScore score={path.career_match_score} lang={lang} />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <SkillGap skills={path.skill_gap} lang={lang} />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <LabourMarketSignals signals={path.labour_market_signals} lang={lang} />
+        </motion.div>
+      </motion.div>
       
-      <Card className="mb-6 bg-secondary/50">
-        <CardHeader>
-            <CardTitle className="font-headline">{content[lang].summary_title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <p className="whitespace-pre-wrap">{summary}</p>
-        </CardContent>
-      </Card>
+      <motion.div variants={itemVariants}>
+        <Card className="mb-6 glass-card">
+          <CardHeader>
+              <CardTitle className="font-headline text-primary">{content[lang].summary_title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+              <p className="whitespace-pre-wrap">{summary}</p>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <motion.div className="grid gap-6 lg:grid-cols-3" variants={containerVariants}>
+        <motion.div className="lg:col-span-2" variants={itemVariants}>
           <RecommendedPath path={path} lang={lang} />
-        </div>
-        <div className="space-y-6">
+        </motion.div>
+        <motion.div className="space-y-6" variants={itemVariants}>
           <AlternativePaths paths={path.alternative_paths} lang={lang} />
-           <Card>
+           <Card className="glass-card">
             <CardHeader>
                 <CardTitle className='font-headline'>Actions</CardTitle>
             </CardHeader>
@@ -75,8 +112,8 @@ export function DashboardClient({ path, lang }: DashboardClientProps) {
                 </Button>
             </CardContent>
            </Card>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }

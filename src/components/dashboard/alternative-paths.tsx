@@ -18,7 +18,7 @@ const content = {
 
 export function AlternativePaths({ paths, lang }: AlternativePathsProps) {
   return (
-    <Card className="h-full">
+    <Card className="h-full glass-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline">
           <Zap className="text-accent" />

@@ -21,17 +21,19 @@ export function DashboardWrapper() {
         setPath(JSON.parse(storedPath));
       } catch (e) {
         console.error('Failed to parse learning path from localStorage', e);
-        router.push('/');
+        // If parsing fails, user might need to re-onboard
+        router.push('/onboarding');
       }
     } else {
-      router.push('/');
+      // If no path is stored, redirect to onboarding
+      router.push('/onboarding');
     }
     setLoading(false);
   }, [router]);
 
   if (loading || !path) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-muted/20">
         <Header lang={lang} setLang={setLang} showToggle={false} />
         <main className="container mx-auto p-4 md:p-6">
           <div className="space-y-6">
@@ -76,7 +78,7 @@ export function DashboardWrapper() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-muted/20">
       <Header lang={lang} setLang={setLang} />
       <main className="flex-1">
         <DashboardClient path={path} lang={lang} />
