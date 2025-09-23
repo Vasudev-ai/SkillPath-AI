@@ -13,7 +13,8 @@ import wav from 'wav';
 import {googleAI} from '@genkit-ai/googleai';
 
 const TextToSpeechInputSchema = z.object({
-  text: z.string().describe('The text to convert to speech.'),
+  summary: z.string().describe('The summary of the learning path to make conversational and convert to speech.'),
+  lang: z.enum(['en', 'hi']).describe('The language for the conversational output.'),
 });
 export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
 
@@ -49,6 +50,26 @@ async function toWav(
   });
 }
 
+const conversationalPrompt = ai.definePrompt({
+    name: 'conversationalPrompt',
+    system: `You are SkillPath Mitra, a friendly and encouraging AI career guide. Your task is to transform a formal summary of a user's learning path into a warm, personal, and conversational monologue.
+
+    RULES:
+    1.  Start by introducing yourself cheerfully (e.g., "Hello! I'm SkillPath Mitra, your personal AI guide.").
+    2.  Do NOT just repeat the summary. Rephrase it in a natural, encouraging, and easy-to-understand way.
+    3.  Keep it concise and to the point, like a quick, helpful voice note.
+    4.  End on a positive and motivational note.
+    5.  Speak in the user's chosen language (English or Hindi).
+    `,
+    input: { schema: TextToSpeechInputSchema },
+    output: { schema: z.object({ conversationalText: z.string() }) },
+    prompt: `The user's language is {{{lang}}}. Convert the following learning path summary into a conversational script for me to speak:
+
+    Summary: {{{summary}}}
+    `,
+});
+
+
 const textToSpeechFlow = ai.defineFlow(
   {
     name: 'textToSpeechFlow',
@@ -56,30 +77,35 @@ const textToSpeechFlow = ai.defineFlow(
     outputSchema: TextToSpeechOutputSchema,
   },
   async (input) => {
+    // 1. Generate conversational text from the summary
+    const conversationalResponse = await conversationalPrompt(input);
+    const textToSpeak = conversationalResponse.output?.conversationalText || (input.lang === 'en' ? 'I am unable to provide a summary at the moment.' : 'मैं इस समय सारांश प्रदान करने में असमर्थ हूं।');
+
+    // 2. Convert the generated text to speech
     const { media } = await ai.generate({
         model: googleAI.model('gemini-2.5-flash-preview-tts'),
         config: {
           responseModalities: ['AUDIO'],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Algenib' },
+              prebuiltVoiceConfig: { voiceName: 'Algenib' }, // A friendly voice
             },
           },
         },
-        prompt: input.text,
+        prompt: textToSpeak,
       });
 
       if (!media) {
         throw new Error('Text-to-speech model did not return any media.');
       }
 
-      // Convert the raw PCM audio data from Base64 to a Buffer
+      // 3. Convert the raw PCM audio data from Base64 to a Buffer
       const audioBuffer = Buffer.from(
         media.url.substring(media.url.indexOf(',') + 1),
         'base64'
       );
 
-      // Convert the PCM Buffer to a WAV Base64 string
+      // 4. Convert the PCM Buffer to a WAV Base64 string
       const wavBase64 = await toWav(audioBuffer);
       
       return {

@@ -81,14 +81,15 @@ export async function interviewAction(
 }
 
 export async function textToSpeechAction(
-    text: string
+    summary: string,
+    lang: 'en' | 'hi'
   ): Promise<{ audioDataUri: string | null; error?: string }> {
-    if (!text.trim()) {
-      return { audioDataUri: null, error: 'Input text cannot be empty.' };
+    if (!summary.trim()) {
+      return { audioDataUri: null, error: 'Input summary cannot be empty.' };
     }
   
     try {
-      const result = await textToSpeech({ text });
+      const result = await textToSpeech({ summary, lang });
       if (result.audioDataUri) {
         return { audioDataUri: result.audioDataUri };
       } else {
