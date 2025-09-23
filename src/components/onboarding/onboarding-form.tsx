@@ -25,22 +25,26 @@ import type { UserProfile } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Progress } from '../ui/progress';
 
-const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
-  education: z.string().min(10, { message: 'Please describe your education.' }),
-  skills: z.string().min(5, { message: 'Please list some of your skills.' }),
-  aspirations: z.string().min(10, { message: 'What are your career aspirations?' }),
-  consent: z.boolean().refine((val) => val === true, {
-    message: 'You must agree to the terms to proceed.',
-  }),
-});
-
 const signupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+  education: z.string(),
+  skills: z.string(),
+  aspirations: z.string(),
+  consent: z.boolean(),
+});
+
+const pathGenSchema = z.object({
+    name: z.string(),
+    email: z.string(),
+    password: z.string(),
+    education: z.string().min(10, { message: 'Please describe your education.' }),
+    skills: z.string().min(5, { message: 'Please list some of your skills.' }),
+    aspirations: z.string().min(10, { message: 'What are your career aspirations?' }),
+    consent: z.boolean().refine((val) => val === true, {
+        message: 'You must agree to the terms to proceed.',
+    }),
 });
 
 
@@ -108,12 +112,13 @@ type OnboardingFormProps = {
 export function OnboardingForm({ lang = 'en', userProfile, onSubmit, isLoading = false }: OnboardingFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  
+  const isSignupFlow = !userProfile;
   const [step, setStep] = useState(0);
 
-  const isSignupFlow = !userProfile;
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(isSignupFlow ? signupSchema : formSchema),
+  const form = useForm<z.infer<typeof pathGenSchema>>({
+    resolver: zodResolver(isSignupFlow ? signupSchema : pathGenSchema),
     defaultValues: {
       name: userProfile?.name || '',
       email: userProfile?.email || '',
@@ -128,19 +133,17 @@ export function OnboardingForm({ lang = 'en', userProfile, onSubmit, isLoading =
   const totalSteps = isSignupFlow ? 3 : 4;
   const progress = ((step + 1) / totalSteps) * 100;
 
-  async function handleSignup(values: z.infer<typeof formSchema>) {
-    // In signup flow, we just save profile and redirect
-    const { consent, ...profileData } = values;
-    localStorage.setItem('userProfile', JSON.stringify(profileData));
-    toast({
-        title: "Account Created!",
-        description: "You can now log in.",
-    });
-    router.push('/login');
-  }
-
-  async function handlePathGeneration(values: z.infer<typeof formSchema>) {
-    if (onSubmit && userProfile) {
+  async function handleSubmit(values: z.infer<typeof pathGenSchema>) {
+    if(isSignupFlow) {
+        const { consent, ...profileData } = values;
+        localStorage.setItem('userProfile', JSON.stringify(profileData));
+        toast({
+            title: "Account Created!",
+            description: "Redirecting you to the dashboard...",
+        });
+        // We log them in and send to dashboard to generate path
+        router.push('/dashboard');
+    } else if (onSubmit && userProfile) {
         const { password, consent, ...profileData } = values;
         onSubmit(profileData as UserProfile);
     }
@@ -149,17 +152,17 @@ export function OnboardingForm({ lang = 'en', userProfile, onSubmit, isLoading =
   const t = content[lang];
   
   const nextStep = async () => {
-    let fields: (keyof z.infer<typeof formSchema>)[] = [];
+    let fields: (keyof z.infer<typeof pathGenSchema>)[] = [];
     if(isSignupFlow) {
-        if (step === 0) fields = ["name"];
-        if (step === 1) fields = ["email"];
+        if (step === 0) fields = ["name", "email"];
+        if (step === 1) fields = ["password"];
     } else {
         if (step === 0) fields = ["education"];
         if (step === 1) fields = ["skills"];
         if (step === 2) fields = ["aspirations"];
     }
 
-    const isValid = await form.trigger(fields);
+    const isValid = await form.trigger(fields as any);
     if(isValid) {
         setStep(prev => Math.min(prev + 1, totalSteps - 1));
     }
@@ -169,9 +172,22 @@ export function OnboardingForm({ lang = 'en', userProfile, onSubmit, isLoading =
   
   const renderSignupSteps = () => {
       switch(step) {
-          case 0: return <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>{t.name}</FormLabel><FormControl><Input placeholder={t.name_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
-          case 1: return <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>{t.email}</FormLabel><FormControl><Input placeholder={t.email_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
-          case 2: return <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>{t.password}</FormLabel><FormControl><Input type="password" placeholder={t.password_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />;
+          case 0: return (
+            <>
+                <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>{t.name}</FormLabel><FormControl><Input placeholder={t.name_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </>
+          );
+          case 1: return (
+              <>
+                <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>{t.email}</FormLabel><FormControl><Input placeholder={t.email_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />
+              </>
+          );
+          case 2: return (
+            <>
+                <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>{t.password}</FormLabel><FormControl><Input type="password" placeholder={t.password_placeholder} {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="consent" render={({ field }) => (<FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>{t.consent_label}</FormLabel><FormMessage /></div></FormItem>)} />
+            </>
+          );
           default: return null;
       }
   }
@@ -201,7 +217,7 @@ export function OnboardingForm({ lang = 'en', userProfile, onSubmit, isLoading =
         <CardContent>
           <Progress value={progress} className="mb-8 h-2" />
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(isSignupFlow ? handleSignup : handlePathGeneration)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 <motion.div
                     key={step}
                     initial={{ x: 30, opacity: 0 }}
