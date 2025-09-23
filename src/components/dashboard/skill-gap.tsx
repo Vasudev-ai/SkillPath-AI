@@ -34,7 +34,7 @@ export function SkillGap({ skills, lang }: SkillGapProps) {
           {skills && skills.length > 0 ? (
             skills.map((skill, index) => (
               <Badge key={index} variant="default" className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20">
-                {skill}
+                {skill.skill}
               </Badge>
             ))
           ) : (
