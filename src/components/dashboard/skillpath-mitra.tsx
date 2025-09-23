@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader } from '../ui/card';
 interface SkillPathMitraProps {
   summary: string;
   lang: 'en' | 'hi';
+  userName: string;
 }
 
 const content = {
@@ -30,7 +31,7 @@ const content = {
   },
 };
 
-export function SkillPathMitra({ summary, lang }: SkillPathMitraProps) {
+export function SkillPathMitra({ summary, lang, userName }: SkillPathMitraProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
@@ -66,7 +67,7 @@ export function SkillPathMitra({ summary, lang }: SkillPathMitraProps) {
 
     setIsLoading(true);
     
-    const result = await textToSpeechAction(summary, lang);
+    const result = await textToSpeechAction({ summary, lang, userName });
     setIsLoading(false);
 
     if (result.audioDataUri) {

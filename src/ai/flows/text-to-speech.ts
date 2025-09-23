@@ -15,6 +15,7 @@ import {googleAI} from '@genkit-ai/googleai';
 const TextToSpeechInputSchema = z.object({
   summary: z.string().describe('The summary of the learning path to make conversational and convert to speech.'),
   lang: z.enum(['en', 'hi']).describe('The language for the conversational output.'),
+  userName: z.string().describe('The name of the user.'),
 });
 export type TextToSpeechInput = z.infer<typeof TextToSpeechInputSchema>;
 
@@ -55,15 +56,16 @@ const conversationalPrompt = ai.definePrompt({
     system: `You are SkillPath Mitra, a friendly and encouraging AI career guide. Your task is to transform a formal summary of a user's learning path into a warm, personal, and conversational monologue.
 
     RULES:
-    1.  Start by introducing yourself cheerfully (e.g., "Hello! I'm SkillPath Mitra, your personal AI guide.").
-    2.  Do NOT just repeat the summary. Rephrase it in a natural, encouraging, and easy-to-understand way.
-    3.  Keep it concise and to the point, like a quick, helpful voice note.
-    4.  End on a positive and motivational note.
-    5.  Speak in the user's chosen language (English or Hindi).
+    1.  Start by greeting the user by their name.
+    2.  Introduce yourself cheerfully (e.g., "I'm SkillPath Mitra, your personal AI guide.").
+    3.  Do NOT just repeat the summary. Rephrase it in a natural, encouraging, and easy-to-understand way.
+    4.  Keep it concise and to the point, like a quick, helpful voice note.
+    5.  End on a positive and motivational note.
+    6.  Speak in the user's chosen language (English or Hindi).
     `,
     input: { schema: TextToSpeechInputSchema },
     output: { schema: z.object({ conversationalText: z.string() }) },
-    prompt: `The user's language is {{{lang}}}. Convert the following learning path summary into a conversational script for me to speak:
+    prompt: `The user's name is {{{userName}}} and their language is {{{lang}}}. Convert the following learning path summary into a conversational script for me to speak:
 
     Summary: {{{summary}}}
     `,
@@ -79,7 +81,7 @@ const textToSpeechFlow = ai.defineFlow(
   async (input) => {
     // 1. Generate conversational text from the summary
     const conversationalResponse = await conversationalPrompt(input);
-    const textToSpeak = conversationalResponse.output?.conversationalText || (input.lang === 'en' ? 'I am unable to provide a summary at the moment.' : 'मैं इस समय सारांश प्रदान करने में असमर्थ हूं।');
+    const textToSpeak = conversationalResponse.output?.conversationalText || (input.lang === 'en' ? `Hello ${input.userName}, I am unable to provide a summary at the moment.` : `नमस्ते ${input.userName}, मैं इस समय सारांश प्रदान करने में असमर्थ हूं।`);
 
     // 2. Convert the generated text to speech
     const { media } = await ai.generate({

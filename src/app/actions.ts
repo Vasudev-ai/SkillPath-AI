@@ -2,7 +2,7 @@
 
 import { generatePersonalizedLearningPath } from '@/ai/flows/generate-personalized-learning-path';
 import { interviewFlow } from '@/ai/flows/interview-flow';
-import { textToSpeech } from '@/ai/flows/text-to-speech';
+import { textToSpeech, TextToSpeechInput } from '@/ai/flows/text-to-speech';
 import type { UserProfile, LearningPath, InterviewMessage } from '@/lib/types';
 import { z } from 'zod';
 
@@ -81,15 +81,14 @@ export async function interviewAction(
 }
 
 export async function textToSpeechAction(
-    summary: string,
-    lang: 'en' | 'hi'
+    input: TextToSpeechInput
   ): Promise<{ audioDataUri: string | null; error?: string }> {
-    if (!summary.trim()) {
+    if (!input.summary.trim()) {
       return { audioDataUri: null, error: 'Input summary cannot be empty.' };
     }
   
     try {
-      const result = await textToSpeech({ summary, lang });
+      const result = await textToSpeech(input);
       if (result.audioDataUri) {
         return { audioDataUri: result.audioDataUri };
       } else {

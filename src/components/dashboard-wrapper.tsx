@@ -71,7 +71,7 @@ export function DashboardWrapper() {
     setGenerating(false);
   };
 
-  if (loading) {
+  if (loading || !userProfile) {
     return (
       <div className="min-h-screen bg-muted/20">
         <Header lang={lang} setLang={setLang} showToggle={false} />
@@ -95,7 +95,7 @@ export function DashboardWrapper() {
       <Header lang={lang} setLang={setLang} />
       <main className="flex-1">
         {path ? (
-          <DashboardClient path={path} lang={lang} />
+          <DashboardClient path={path} lang={lang} userProfile={userProfile} />
         ) : (
           <div className="container mx-auto p-4 md:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-80px)]">
             <Card className="max-w-2xl w-full glass-card">
