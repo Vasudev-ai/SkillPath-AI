@@ -11,3 +11,8 @@ export type UserProfile = {
 
 // The output from the AI flow is the learning path
 export type LearningPath = GeneratePersonalizedLearningPathOutput;
+
+export type InterviewMessage = {
+    role: 'user' | 'model';
+    content: string;
+};

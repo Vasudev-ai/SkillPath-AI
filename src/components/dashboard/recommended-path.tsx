@@ -6,6 +6,8 @@ import type { LearningPath } from '@/lib/types';
 import { nsqfCourses } from '@/lib/data';
 import { ExplainabilityLayer } from './explainability-layer';
 import { Badge } from '../ui/badge';
+import { InterviewModal } from './interview-modal';
+import { useState } from 'react';
 
 interface RecommendedPathProps {
   path: LearningPath;
@@ -32,7 +34,8 @@ const content = {
 }
 
 export function RecommendedPath({ path, lang }: RecommendedPathProps) {
-  
+  const [interviewCourse, setInterviewCourse] = useState<string | null>(null);
+
   const pathWithDetails = path.nsqf_mapping.map((step, index) => {
     const course = nsqfCourses.find(c => c.course_id === step.course_id);
     
@@ -49,6 +52,12 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
   });
 
   return (
+    <>
+    <InterviewModal 
+      courseTitle={interviewCourse}
+      onClose={() => setInterviewCourse(null)}
+      lang={lang}
+    />
     <Card className="h-full glass-card">
       <CardHeader>
         <CardTitle className="font-headline text-primary">{content[lang].title}</CardTitle>
@@ -85,7 +94,7 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
                             <ArrowRight className="ml-2 h-4 w-4" />
                           </Button>
                         </Link>
-                        <Button variant="outline" className='flex-grow'>
+                        <Button variant="outline" className='flex-grow' onClick={() => setInterviewCourse(step.course.title)}>
                             <Mic className="mr-2 h-4 w-4" />
                             {content[lang].practice}
                         </Button>
@@ -108,5 +117,6 @@ export function RecommendedPath({ path, lang }: RecommendedPathProps) {
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }

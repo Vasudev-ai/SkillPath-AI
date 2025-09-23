@@ -1,7 +1,8 @@
 'use server';
 
 import { generatePersonalizedLearningPath } from '@/ai/flows/generate-personalized-learning-path';
-import type { UserProfile, LearningPath } from '@/lib/types';
+import { interviewFlow } from '@/ai/flows/interview-flow';
+import type { UserProfile, LearningPath, InterviewMessage } from '@/lib/types';
 import { z } from 'zod';
 
 const userProfileSchema = z.object({
@@ -9,7 +10,7 @@ const userProfileSchema = z.object({
   email: z.string().email('Invalid email address'),
   education: z.string().min(1, 'Education is required'),
   skills: z.string().min(1, 'Skills are required'),
-  aspirations: z.string().min(1, 'Aspirations are required'),
+  aspirations: z.string().min(1, 'Aspirations is required'),
 });
 
 export async function generatePathAction(
@@ -54,6 +55,26 @@ export async function generatePathAction(
     return {
       path: null,
       error: `An unexpected error occurred. Please try again later. Details: ${errorMessage}`,
+    };
+  }
+}
+
+export async function interviewAction(
+  courseTitle: string,
+  messages: InterviewMessage[]
+): Promise<{ response: string; error?: string }> {
+  try {
+    const result = await interviewFlow({
+      courseTitle,
+      messages: JSON.stringify(messages),
+    });
+    return { response: result.response };
+  } catch (error) {
+    console.error('Error in interview flow:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during the interview.';
+    return {
+      response: '',
+      error: `An unexpected error occurred. Details: ${errorMessage}`,
     };
   }
 }
