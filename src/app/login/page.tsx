@@ -35,14 +35,9 @@ export default function LoginPage() {
     if (storedUser) {
       const userProfile = JSON.parse(storedUser);
       if (userProfile.email === values.email && userProfile.password === values.password) {
-        // Check if a learning path exists to prevent errors on the dashboard
-        const learningPath = localStorage.getItem('learningPath');
-        if (learningPath) {
-          router.push('/dashboard');
-        } else {
-          // If no path, send them to onboarding to generate one
-          router.push('/onboarding');
-        }
+        // A user with a valid login should always go to the dashboard.
+        // The dashboard itself will handle whether to show the path or the prompt to create one.
+        router.push('/dashboard');
       } else {
         toast({
           variant: 'destructive',
@@ -117,7 +112,7 @@ export default function LoginPage() {
                 <CardTitle className="text-lg font-headline">Admin Panel</CardTitle>
             </CardHeader>
             <CardContent>
-                <Link href="/admin" className="w-full">
+                <Link href="/admin">
                     <Button variant="secondary" className="w-full">
                         <Shield className="mr-2" /> Login as Trainer/Admin
                     </Button>
