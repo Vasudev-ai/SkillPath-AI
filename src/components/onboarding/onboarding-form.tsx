@@ -56,6 +56,8 @@ const content = {
         submit_button: "Generate My Path",
         loading_text: "Our AI is crafting your path...",
         error_title: "Uh oh! Something went wrong.",
+        prev_button: "Previous",
+        next_button: "Next",
     },
     hi: {
         title: "आइए आपका भविष्य बनाएं।",
@@ -74,6 +76,8 @@ const content = {
         submit_button: "मेरा रास्ता बनाएं",
         loading_text: "हमारा एआई आपके लिए रास्ता बना रहा है...",
         error_title: "उफ़! कुछ गलत हो गया।",
+        prev_button: "पिछला",
+        next_button: "अगला",
     }
 }
 
@@ -122,8 +126,128 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
 
   const t = content[lang];
   
-  const nextStep = () => setStep(prev => Math.min(prev + 1, totalSteps - 1));
+  const nextStep = async () => {
+    let fields: ("name" | "email" | "education" | "skills" | "aspirations")[] = [];
+    if (step === 0) fields = ["name"];
+    if (step === 1) fields = ["email"];
+    if (step === 2) fields = ["education"];
+    if (step === 3) fields = ["skills"];
+
+    const isValid = await form.trigger(fields);
+    if(isValid) {
+        setStep(prev => Math.min(prev + 1, totalSteps - 1));
+    }
+  }
+
   const prevStep = () => setStep(prev => Math.max(prev - 1, 0));
+  
+  const renderStep = () => {
+    switch (step) {
+      case 0:
+        return (
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.name}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t.name_placeholder} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case 1:
+        return (
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.email}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t.email_placeholder} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case 2:
+        return (
+          <FormField
+            control={form.control}
+            name="education"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.education}</FormLabel>
+                <FormControl>
+                  <Textarea placeholder={t.education_placeholder} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case 3:
+        return (
+          <FormField
+            control={form.control}
+            name="skills"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.skills}</FormLabel>
+                <FormControl>
+                  <Textarea placeholder={t.skills_placeholder} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      case 4:
+        return (
+          <>
+            <FormField
+              control={form.control}
+              name="aspirations"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.aspirations}</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder={t.aspirations_placeholder} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="consent"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm mt-8">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>{t.consent_label}</FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
+            />
+          </>
+        );
+      default:
+        return null;
+    }
+  }
+
 
   return (
     <motion.div
@@ -141,125 +265,32 @@ export function OnboardingForm({ lang }: { lang: 'en' | 'hi' }) {
           <Progress value={progress} className="mb-8" />
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                {step === 0 && (
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>{t.name}</FormLabel>
-                                <FormControl>
-                                    <Input placeholder={t.name_placeholder} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </motion.div>
-                )}
-                {step === 1 && (
-                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>{t.email}</FormLabel>
-                                <FormControl>
-                                    <Input placeholder={t.email_placeholder} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                     </motion.div>
-                )}
-
-                {step === 2 && (
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                        <FormField
-                            control={form.control}
-                            name="education"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t.education}</FormLabel>
-                                <FormControl>
-                                <Textarea placeholder={t.education_placeholder} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                    </motion.div>
-                )}
-                {step === 3 && (
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                        <FormField
-                            control={form.control}
-                            name="skills"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>{t.skills}</FormLabel>
-                                <FormControl>
-                                <Textarea placeholder={t.skills_placeholder} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                    </motion.div>
-                )}
                 
-                {step === 4 && (
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                        <FormField
-                            control={form.control}
-                            name="aspirations"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>{t.aspirations}</FormLabel>
-                                <FormControl>
-                                    <Textarea placeholder={t.aspirations_placeholder} {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                <motion.div
+                    key={step}
+                    initial={{ x: 30, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -30, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-8"
+                >
+                    {renderStep()}
+                </motion.div>
 
-                        <FormField
-                            control={form.control}
-                            name="consent"
-                            render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm mt-8">
-                                <FormControl>
-                                <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                <FormLabel>{t.consent_label}</FormLabel>
-                                </div>
-                            </FormItem>
-                            )}
-                        />
-                    </motion.div>
-                )}
-
-                <div className="flex justify-between">
+                <div className="flex justify-between pt-4">
                 {step > 0 && (
                     <Button type="button" variant="outline" onClick={prevStep}>
-                        Previous
+                        {t.prev_button}
                     </Button>
                 )}
+                <div className='flex-grow' />
                 {step < totalSteps - 1 && (
-                    <Button type="button" onClick={nextStep} className="ml-auto">
-                        Next
+                    <Button type="button" onClick={nextStep}>
+                        {t.next_button}
                     </Button>
                 )}
                 {step === totalSteps - 1 && (
-                    <Button type="submit" className="w-full" disabled={isLoading}>
+                    <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

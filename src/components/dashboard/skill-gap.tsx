@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, Wrench } from 'lucide-react';
+import { Wrench } from 'lucide-react';
 import type { LearningPath } from '@/lib/types';
 
 interface SkillGapProps {
