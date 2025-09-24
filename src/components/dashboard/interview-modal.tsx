@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { InterviewMessage } from '@/lib/types';
 import { interviewAction } from '@/app/actions';
-import { Bot, Loader2, Send, User, VideoOff } from 'lucide-react';
+import { Bot, Loader2, Mic, MicOff, Send, User, VideoOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -23,22 +23,30 @@ const content = {
     en: {
         title: "Practice Video Interview",
         description: "Your AI coach will ask you a few questions related to",
-        placeholder: "Type your answer here...",
+        placeholder: "Type or record your answer...",
         send: "Send",
         end: "End Interview",
         error_title: "Interview Error",
         camera_error_title: "Camera Access Required",
         camera_error_description: "Please enable camera permissions in your browser settings to use this feature.",
+        speech_error_title: "Speech Recognition Error",
+        speech_error_description: "Your browser does not support speech recognition.",
+        recording: "Recording... Click to stop.",
+        start_recording: "Record Answer"
     },
     hi: {
         title: "वीडियो साक्षात्कार का अभ्यास करें",
         description: "आपका AI कोच आपसे संबंधित कुछ प्रश्न पूछेगा",
-        placeholder: "अपना उत्तर यहां लिखें...",
+        placeholder: "अपना उत्तर टाइप करें या रिकॉर्ड करें...",
         send: "भेजें",
         end: "साक्षात्कार समाप्त करें",
         error_title: "साक्षात्कार में त्रुटि",
         camera_error_title: "कैमरा एक्सेस आवश्यक है",
         camera_error_description: "इस सुविधा का उपयोग करने के लिए कृपया अपनी ब्राउज़र सेटिंग्स में कैमरा अनुमति सक्षम करें।",
+        speech_error_title: "भाषण पहचान में त्रुटि",
+        speech_error_description: "आपका ब्राउज़र भाषण पहचान का समर्थन नहीं करता है।",
+        recording: "रिकॉर्डिंग... रोकने के लिए क्लिक करें।",
+        start_recording: "उत्तर रिकॉर्ड करें"
     }
 }
 
@@ -47,9 +55,11 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const recognitionRef = useRef<any>(null); // Using `any` for SpeechRecognition for wider browser support
   const { toast } = useToast();
   const t = content[lang];
 
@@ -61,11 +71,42 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
   }
 
   useEffect(() => {
-    // When the modal opens, get camera permission
     if (courseTitle) {
-      const getCameraPermission = async () => {
+      // Setup Speech Recognition
+      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
+
+        recognitionRef.current.onresult = (event: any) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            setInput(finalTranscript + interimTranscript);
+        };
+        recognitionRef.current.onerror = (event: any) => {
+            console.error('Speech recognition error', event.error);
+        };
+
+      } else {
+        toast({
+            variant: 'destructive',
+            title: t.speech_error_title,
+            description: t.speech_error_description,
+        });
+      }
+
+      // Get camera permission and start interview
+      const getCameraAndStart = async () => {
         try {
-          // Reset state
           setMessages([]);
           setHasCameraPermission(null);
           
@@ -76,21 +117,18 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
             videoRef.current.srcObject = stream;
           }
 
-          // Start the interview only after getting camera permission
           setIsLoading(true);
-          interviewAction(courseTitle, [])
-            .then(res => {
-              if (res.response) {
-                setMessages([{ role: 'model', content: res.response }]);
-                if (res.audioDataUri) {
-                    playAudio(res.audioDataUri);
-                }
-              } else if(res.error) {
-                toast({ variant: 'destructive', title: t.error_title, description: res.error });
-                onClose();
-              }
-            })
-            .finally(() => setIsLoading(false));
+          const res = await interviewAction(courseTitle, []);
+          if (res.response) {
+            setMessages([{ role: 'model', content: res.response }]);
+            if (res.audioDataUri) {
+                playAudio(res.audioDataUri);
+            }
+          } else if(res.error) {
+            toast({ variant: 'destructive', title: t.error_title, description: res.error });
+            onClose();
+          }
+          setIsLoading(false);
 
         } catch (error) {
           console.error('Error accessing camera:', error);
@@ -103,9 +141,8 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
         }
       };
 
-      getCameraPermission();
+      getCameraAndStart();
       
-      // Cleanup function to stop video stream when modal closes
       return () => {
         if(videoRef.current && videoRef.current.srcObject) {
             const stream = videoRef.current.srcObject as MediaStream;
@@ -114,12 +151,14 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
         if(audioRef.current) {
             audioRef.current.pause();
         }
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
       }
     }
-  }, [courseTitle, onClose, toast, t.error_title, t.camera_error_title, t.camera_error_description]);
+  }, [courseTitle, onClose, toast, lang, t]);
   
   useEffect(() => {
-    // Scroll to bottom when a new message is added
     if (scrollAreaRef.current) {
         scrollAreaRef.current.scrollTo({
             top: scrollAreaRef.current.scrollHeight,
@@ -128,9 +167,24 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
     }
   }, [messages])
 
+  const handleToggleRecording = () => {
+    if (isRecording) {
+        recognitionRef.current?.stop();
+        setIsRecording(false);
+    } else {
+        recognitionRef.current?.start();
+        setIsRecording(true);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || !courseTitle) return;
+
+    if (isRecording) {
+        recognitionRef.current?.stop();
+        setIsRecording(false);
+    }
 
     const newMessages: InterviewMessage[] = [...messages, { role: 'user', content: input }];
     setMessages(newMessages);
@@ -237,8 +291,18 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
                             disabled={isLoading || hasCameraPermission !== true}
                             className="flex-1"
                         />
-                        <Button type="submit" disabled={isLoading || !input.trim() || hasCameraPermission !== true}>
-                            <Send className="h-4 w-4" />
+                         <Button 
+                            type="button" 
+                            size="icon" 
+                            variant={isRecording ? "destructive" : "outline"}
+                            onClick={handleToggleRecording} 
+                            disabled={isLoading || hasCameraPermission !== true}
+                            title={isRecording ? t.recording : t.start_recording}
+                          >
+                           {isRecording ? <MicOff /> : <Mic />}
+                         </Button>
+                        <Button type="submit" size="icon" disabled={isLoading || !input.trim() || hasCameraPermission !== true} title={t.send}>
+                            <Send />
                         </Button>
                     </form>
                 </div>
