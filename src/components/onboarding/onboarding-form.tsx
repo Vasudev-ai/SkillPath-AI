@@ -154,8 +154,9 @@ export function OnboardingForm({ lang = 'en', userProfile, onSubmit, isLoading =
   const nextStep = async () => {
     let fields: (keyof z.infer<typeof pathGenSchema>)[] = [];
     if(isSignupFlow) {
-        if (step === 0) fields = ["name", "email"];
-        if (step === 1) fields = ["password"];
+        if (step === 0) fields = ["name"];
+        if (step === 1) fields = ["email"];
+        if (step === 2) fields = ["password"];
     } else {
         if (step === 0) fields = ["education"];
         if (step === 1) fields = ["skills"];
