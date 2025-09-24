@@ -49,8 +49,16 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
   const t = content[lang];
+
+  const playAudio = (audioDataUri: string) => {
+    if (audioRef.current) {
+        audioRef.current.src = audioDataUri;
+        audioRef.current.play().catch(e => console.error("Audio play failed", e));
+    }
+  }
 
   useEffect(() => {
     // When the modal opens, get camera permission
@@ -74,6 +82,9 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
             .then(res => {
               if (res.response) {
                 setMessages([{ role: 'model', content: res.response }]);
+                if (res.audioDataUri) {
+                    playAudio(res.audioDataUri);
+                }
               } else if(res.error) {
                 toast({ variant: 'destructive', title: t.error_title, description: res.error });
                 onClose();
@@ -99,6 +110,9 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
         if(videoRef.current && videoRef.current.srcObject) {
             const stream = videoRef.current.srcObject as MediaStream;
             stream.getTracks().forEach(track => track.stop());
+        }
+        if(audioRef.current) {
+            audioRef.current.pause();
         }
       }
     }
@@ -127,6 +141,9 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
         const result = await interviewAction(courseTitle, newMessages);
         if (result.response) {
             setMessages(prev => [...prev, { role: 'model', content: result.response }]);
+            if (result.audioDataUri) {
+                playAudio(result.audioDataUri);
+            }
         } else if (result.error) {
             toast({ variant: 'destructive', title: t.error_title, description: result.error });
         }
@@ -227,6 +244,7 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
                 </div>
             </div>
         </div>
+        <audio ref={audioRef} hidden />
       </DialogContent>
     </Dialog>
   );

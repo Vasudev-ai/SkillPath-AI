@@ -1,7 +1,7 @@
 'use server';
 
 import { generatePersonalizedLearningPath } from '@/ai/flows/generate-personalized-learning-path';
-import { interviewFlow } from '@/ai/flows/interview-flow';
+import { interviewFlow, InterviewFlowOutput } from '@/ai/flows/interview-flow';
 import { textToSpeech, TextToSpeechInput } from '@/ai/flows/text-to-speech';
 import type { UserProfile, LearningPath, InterviewMessage } from '@/lib/types';
 import { z } from 'zod';
@@ -63,13 +63,13 @@ export async function generatePathAction(
 export async function interviewAction(
   courseTitle: string,
   messages: InterviewMessage[]
-): Promise<{ response: string; error?: string }> {
+): Promise<InterviewFlowOutput & { error?: string }> {
   try {
     const result = await interviewFlow({
       courseTitle,
       messages: JSON.stringify(messages),
     });
-    return { response: result.response };
+    return result;
   } catch (error) {
     console.error('Error in interview flow:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during the interview.';

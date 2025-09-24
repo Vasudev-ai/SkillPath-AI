@@ -1,4 +1,5 @@
-import type { GeneratePersonalizedLearningPathOutput } from '@/ai/flows/generate-personalized-learning-path';
+import type { GeneratePersonalizedLearningPathOutput, interviewFlow } from '@/ai/flows/generate-personalized-learning-path';
+import type { InterviewFlowOutput } from '@/ai/flows/interview-flow';
 
 export type UserProfile = {
   name: string;
