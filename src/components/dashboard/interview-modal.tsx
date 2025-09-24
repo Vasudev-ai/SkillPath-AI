@@ -3,12 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { InterviewMessage } from '@/lib/types';
 import { interviewAction } from '@/app/actions';
-import { Bot, Loader2, Mic, MicOff, Send, User, VideoOff } from 'lucide-react';
+import { Bot, Loader2, Mic, MicOff, User, VideoOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -23,43 +22,44 @@ const content = {
     en: {
         title: "Practice Video Interview",
         description: "Your AI coach will ask you a few questions related to",
-        placeholder: "Type or record your answer...",
-        send: "Send",
+        placeholder: "Click the mic to speak...",
+        stop_recording: "Stop Recording",
+        start_recording: "Record Answer",
+        processing: "Processing...",
         end: "End Interview",
         error_title: "Interview Error",
         camera_error_title: "Camera Access Required",
         camera_error_description: "Please enable camera permissions in your browser settings to use this feature.",
         speech_error_title: "Speech Recognition Error",
         speech_error_description: "Your browser does not support speech recognition.",
-        recording: "Recording... Click to stop.",
-        start_recording: "Record Answer"
     },
     hi: {
         title: "वीडियो साक्षात्कार का अभ्यास करें",
         description: "आपका AI कोच आपसे संबंधित कुछ प्रश्न पूछेगा",
-        placeholder: "अपना उत्तर टाइप करें या रिकॉर्ड करें...",
-        send: "भेजें",
+        placeholder: "बोलने के लिए माइक पर क्लिक करें...",
+        stop_recording: "रिकॉर्डिंग रोकें",
+        start_recording: "उत्तर रिकॉर्ड करें",
+        processing: "प्रोसेस हो रहा है...",
         end: "साक्षात्कार समाप्त करें",
         error_title: "साक्षात्कार में त्रुटि",
         camera_error_title: "कैमरा एक्सेस आवश्यक है",
         camera_error_description: "इस सुविधा का उपयोग करने के लिए कृपया अपनी ब्राउज़र सेटिंग्स में कैमरा अनुमति सक्षम करें।",
         speech_error_title: "भाषण पहचान में त्रुटि",
         speech_error_description: "आपका ब्राउज़र भाषण पहचान का समर्थन नहीं करता है।",
-        recording: "रिकॉर्डिंग... रोकने के लिए क्लिक करें।",
-        start_recording: "उत्तर रिकॉर्ड करें"
     }
 }
 
 export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalProps) {
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
-  const [input, setInput] = useState('');
+  const [liveTranscript, setLiveTranscript] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const finalTranscriptRef = useRef('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const recognitionRef = useRef<any>(null); // Using `any` for SpeechRecognition for wider browser support
+  const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
   const t = content[lang];
 
@@ -70,9 +70,35 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
     }
   }
 
+  const handleSubmit = async (spokenText: string) => {
+    if (!spokenText.trim() || !courseTitle) return;
+
+    const newMessages: InterviewMessage[] = [...messages, { role: 'user', content: spokenText }];
+    setMessages(newMessages);
+    setLiveTranscript('');
+    finalTranscriptRef.current = '';
+    setIsLoading(true);
+
+    try {
+        const result = await interviewAction(courseTitle, newMessages);
+        if (result.response) {
+            setMessages(prev => [...prev, { role: 'model', content: result.response }]);
+            if (result.audioDataUri) {
+                playAudio(result.audioDataUri);
+            }
+        } else if (result.error) {
+            toast({ variant: 'destructive', title: t.error_title, description: result.error });
+        }
+    } catch(error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        toast({ variant: 'destructive', title: t.error_title, description: errorMessage });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+  
   useEffect(() => {
     if (courseTitle) {
-      // Setup Speech Recognition
       const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
@@ -82,15 +108,14 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
 
         recognitionRef.current.onresult = (event: any) => {
             let interimTranscript = '';
-            let finalTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
+                    finalTranscriptRef.current += event.results[i][0].transcript + ' ';
                 } else {
                     interimTranscript += event.results[i][0].transcript;
                 }
             }
-            setInput(finalTranscript + interimTranscript);
+            setLiveTranscript(finalTranscriptRef.current + interimTranscript);
         };
         recognitionRef.current.onerror = (event: any) => {
             console.error('Speech recognition error', event.error);
@@ -104,7 +129,6 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
         });
       }
 
-      // Get camera permission and start interview
       const getCameraAndStart = async () => {
         try {
           setMessages([]);
@@ -171,41 +195,12 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
     if (isRecording) {
         recognitionRef.current?.stop();
         setIsRecording(false);
+        handleSubmit(liveTranscript);
     } else {
+        finalTranscriptRef.current = '';
+        setLiveTranscript('');
         recognitionRef.current?.start();
         setIsRecording(true);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading || !courseTitle) return;
-
-    if (isRecording) {
-        recognitionRef.current?.stop();
-        setIsRecording(false);
-    }
-
-    const newMessages: InterviewMessage[] = [...messages, { role: 'user', content: input }];
-    setMessages(newMessages);
-    setInput('');
-    setIsLoading(true);
-
-    try {
-        const result = await interviewAction(courseTitle, newMessages);
-        if (result.response) {
-            setMessages(prev => [...prev, { role: 'model', content: result.response }]);
-            if (result.audioDataUri) {
-                playAudio(result.audioDataUri);
-            }
-        } else if (result.error) {
-            toast({ variant: 'destructive', title: t.error_title, description: result.error });
-        }
-    } catch(error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-        toast({ variant: 'destructive', title: t.error_title, description: errorMessage });
-    } finally {
-        setIsLoading(false);
     }
   };
 
@@ -282,29 +277,20 @@ export function InterviewModal({ courseTitle, onClose, lang }: InterviewModalPro
                         )}
                     </div>
                 </ScrollArea>
-                <div className="p-6 pt-2 border-t bg-background/50">
-                    <form onSubmit={handleSubmit} className="flex gap-2">
-                        <Input
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder={t.placeholder}
-                            disabled={isLoading || hasCameraPermission !== true}
-                            className="flex-1"
-                        />
-                         <Button 
-                            type="button" 
-                            size="icon" 
-                            variant={isRecording ? "destructive" : "outline"}
-                            onClick={handleToggleRecording} 
-                            disabled={isLoading || hasCameraPermission !== true}
-                            title={isRecording ? t.recording : t.start_recording}
-                          >
-                           {isRecording ? <MicOff /> : <Mic />}
-                         </Button>
-                        <Button type="submit" size="icon" disabled={isLoading || !input.trim() || hasCameraPermission !== true} title={t.send}>
-                            <Send />
-                        </Button>
-                    </form>
+                <div className="p-6 pt-2 border-t bg-background/50 flex flex-col items-center justify-center gap-4">
+                     <div className='h-12 w-full text-center p-3 text-muted-foreground italic rounded-lg bg-muted/50 border'>
+                        {isRecording ? liveTranscript : (isLoading ? t.processing : t.placeholder)}
+                     </div>
+                     <Button 
+                        type="button" 
+                        size="lg" 
+                        className={cn("rounded-full w-20 h-20 transition-all", isRecording && "bg-destructive hover:bg-destructive/90 scale-110")}
+                        onClick={handleToggleRecording} 
+                        disabled={isLoading || hasCameraPermission !== true}
+                        title={isRecording ? t.stop_recording : t.start_recording}
+                      >
+                       {isRecording ? <MicOff size={32} /> : <Mic size={32} />}
+                     </Button>
                 </div>
             </div>
         </div>
